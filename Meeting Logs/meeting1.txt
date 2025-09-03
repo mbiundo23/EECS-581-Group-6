@@ -1,0 +1,9 @@
+Team Meeting 09.02
+WHEN: Tuesday, September 11th @ 8:30 pm
+PURPOSE: First team meeting, setting our environment
+ATTENDANCE: Gavin Billinger (virtually), Bisshoy Battacharjee, Joshua Welicky, Mark Kitchin, Maximilian Biundo
+
+We spent the meeting first setting up a consistent meeting time for the future. We decided tentatively to set up our meetings at 12:15 on Tuesday in Eaton. Then we moved our Scrum meetings to 10 am on Friday.
+
+Next, we set up our GitHub repository and put together a plan in Microsoft Planner. Bisshoy, Joshua, and Mark will lay out project requirements while Max, Gavin, and Mark (again) will look into the design specifics of the Minesweeper program.
+We also decided our coding environment would be Python. Then, we broke for the evening.
