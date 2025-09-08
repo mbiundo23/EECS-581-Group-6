@@ -27,7 +27,7 @@ def getNeighbors(num): # Helps narrow the spaces to check bombs for a given spac
                 neighbors.append(num + 11) # Add down-right
         return neighbors
 
-def initBoard(bomb_ct, bomb_spaces):
+def generateBoard(bomb_ct, bomb_spaces):
         board = [] # We initialize an array.
         for i in range(1, 102): # Range fills indices 1-100.
                 board.append(0) # We fill array with 0's.
@@ -49,7 +49,7 @@ def initBoard(bomb_ct, bomb_spaces):
         # Once we're done iterating, the board is all set up!
         return board
 
-def printBoard(board):
+def printBoard(board): # DEBUG FUNCTION TO SEE BACKGROUND BOARD STATE IN ROUGHLY USER FORMAT
         i = 0
         string = ''
         for j in range(len(board)):
@@ -63,7 +63,7 @@ def printBoard(board):
                         string = ''
         return
 
-def displayBoard(display):
+def displayBoard(display): # FUNCTION TO DISPLAY USER'S BOARD
         print('    A  B  C  D  E  F  G  H  I  J  ')
         test_string = ''
         for i in range(10):
@@ -76,21 +76,67 @@ def displayBoard(display):
                 test_string = ''
         return
 
+def getInput(): # We can flesh this out with error handling later.
+        inp_string = input("Please give command: ") # Ask for command.
+        com_type = inp_string[0] # Parse first character for command type ("m" or "f")
+        inp_string = inp_string[1:len(inp_string)] # Remove first character from input string.
+        
+        col = inp_string[len(inp_string)-1] # Look at end of input string for column letter.
+        cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] # Bank of possible letters.
+        col = cols.index(col) + 1 # Translate that column into numerical column position.
+        inp_string = inp_string[:len(inp_string)-1] # Remove last character from input string.
+        
+        row = int(inp_string) # What's remaining of input string should be row number.
+        
+        command = [] # Create command value.
+        command.append(com_type) # Add the "m" or "f"
+        command.append(row) # Add row number.
+        command.append(col) # Add column number.
+        
+        return command # Return parsed input.
+
 def main():
-        print('Welcome to Minesweeper!') # Welcome the player!
-        bomb_ct = int(input('How many bombs should there be?: ')) # Get bomb count!
-        bomb_spaces = random.sample(range(1, 101), bomb_ct) # Get random position of bombs.
-        board = initBoard(bomb_ct, bomb_spaces) # Generate board
-        display = [] # Generate display board
+        # DISPLAY CREATION
+        display = []
         for i in range(101):
                 display.append(' ') # For now fill it with empty space
+
+        # GAME START
+        print('Welcome to Minesweeper!') # Welcome the player!
+        bomb_ct = int(input('How many bombs should there be?: ')) # Get bomb count!
+        displayBoard(display) # Show empty display to user.
+
+        bomb_spaces = random.sample(range(1, 101), bomb_ct) # Get random position of bombs.
+        user_input = getInput() # Get first user input as list in command type, column, row format
+        space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row into actual board space.
+        
+        # SPACE-BOMB COLLISION PROBLEM
+        if space in bomb_spaces:
+                problem_index = bomb_spaces.index(space) # Isolate where in the list of bomb spaces the user space and bomb collide.
+                while space == bomb_spaces[problem_index]: # While these two values are the same...
+                        bomb_spaces[problem_index] = random.randint(1, 100) # ...we will reroll that bomb space.
+                        i = 0 # Then we'll check how many times the new value appears.
+                        for place in bomb_spaces: # Check every bomb space
+                                if bomb_spaces[problem_index] == place: # If the new space appears in bomb spaces, increment.
+                                        i += 1 # This should increment only once (when the new space compares itself).
+                        if i > 1: # If the new bomb space increments multiple times, we still have a collision.
+                                bomb_spaces[problem_index] = space # We can't let the while loop end so reset with space.
+
+        # CALL BOARD GENERATION                        
+        board = generateBoard(bomb_ct, bomb_spaces)
+        
+        # UPDATE BOARD
+        display[space] = board[space] # for now this is a placeholder. this should be a real function that propogates value.
+        
+        # PRINT DISPLAY FOR USER
         print('\n')
-        displayBoard(display)
+        displayBoard(display) # Print display
+        
+        # DEBUG LINES
         print('\n')
         printBoard(board)
-        print('\n')
-        for i in range(len(board)):
-                display[i] = board[i]
-        displayBoard(display)
+        
+        # GAME LOOP BEGINS
+        
         return
 main()
