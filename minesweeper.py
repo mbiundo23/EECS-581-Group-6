@@ -165,7 +165,7 @@ def main():
                                 raise
                         i = 1
                 except:
-                        print("Can not flag on first input. Try again.")
+                        print("Cannot flag on first input. Try again.")
         space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row into actual board space.
         
         # SPACE-BOMB COLLISION PROBLEM
@@ -199,13 +199,15 @@ def main():
                 if user_input[0] == 'f': # FLAG SCENARIO
                         if display[space] == ' ':
                                 if flag_ct + 1 > bomb_ct:
-                                        print("Can not flag any more spaces. Please unflag.")
+                                        print("Cannot flag any more spaces. Please unflag.")
                                 else:
                                         display[space] = 'F'
                                         flag_ct += 1
                         elif display[space] == 'F':
                                 display[space] = ' '
                                 flag_ct -= 1
+                        else:
+                                print("Cannot flag given space.")
                 elif user_input[0] == 'm': # MINE SCENARIO
                         # There's a few things we check here:
                                 # Is the space a bomb?
@@ -214,7 +216,7 @@ def main():
                                 # Is the space any other value?
                         # We will check if the space is a flag first.
                         if display[space] == "F":
-                                print("Can not mine here. Flag is in the way.")# We don't actually do anything. We just say a flag is in the way.
+                                print("Cannot mine here. Flag is in the way.")# We don't actually do anything. We just say a flag is in the way.
                         elif board[space] == "*":
                                 for bomb in bomb_spaces:
                                         display[bomb] = "*"
