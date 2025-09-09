@@ -38,13 +38,13 @@ def getNeighbors(num): # Helps narrow the spaces to check bombs for a given spac
                 neighbors.append(num + 11) # Add down-right
         return neighbors
 
-def propogate(space, display, board):
+def propagate(space, display, board):
         display[space] = board[space]
         neighbors = getNeighbors(space)
         for neighbor in neighbors:
                 if board[neighbor] == 0:
                         if display[neighbor] != 0:
-                                propogate(neighbor, display, board)
+                                propagate(neighbor, display, board)
                 else:
                         display[neighbor] = board[neighbor]
 
@@ -185,7 +185,7 @@ def main():
         
         # UPDATE BOARD
         if board[space] == 0:
-                propogate(space, display, board)
+                propagate(space, display, board)
         else:
                 display[space] = board[space]
         
@@ -221,7 +221,7 @@ def main():
                                 status = "Loss"
                                 displayBoard(display, status, bomb_ct, flag_ct)
                         elif board[space] == 0:
-                                propogate(space, display, board)
+                                propagate(space, display, board)
                         else:
                                 display[space] = board[space]
         return
