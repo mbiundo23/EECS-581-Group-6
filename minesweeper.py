@@ -109,7 +109,7 @@ def getInput(): # We can flesh this out with error handling later.
                                 raise
                         inp_string = inp_string[1:len(inp_string)] # Remove first character from input string.
         
-                        col = inp_string[len(inp_string)-1] # Look at end of input string for column letter.
+                        col = inp_string[len(inp_string)-1].lower() # Look at end of input string for column letter.
                         cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] # Bank of possible letters.
                         if col not in cols:
                                 raise
