@@ -39,7 +39,7 @@ def propagate(space, display, board):
                 else:
                         display[neighbor] = board[neighbor]
 
-def generateBoard(bomb_ct, bomb_spaces): # Create background board with bombs and numerical values.
+def generateBoard(bomb_spaces): # Create background board with bombs and numerical values.
         board = [] # We initialize an array.
         for i in range(1, 102): # Range fills indices 1-100.
                 board.append(0) # We fill array with 0's.
@@ -188,7 +188,7 @@ def main():
                                 bomb_spaces[problem_index] = space # We can't let the while loop end so reset with space.
 
         # CALL BOARD GENERATION                        
-        board = generateBoard(bomb_ct, bomb_spaces)
+        board = generateBoard(bomb_spaces)
         
         # UPDATE BOARD w/ FIRST SPACE
         if board[space] == 0:
