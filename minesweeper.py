@@ -90,7 +90,7 @@ def displayBoard(display, status, bomb_ct, flag_ct): # FUNCTION TO DISPLAY USER'
         print("Mines remaining:", bomb_ct - flag_ct, "\n")
         return
 
-def getInput(): # We can flesh this out with error handling later.
+def getInput(): # Parses given command into usable interpretation for program.
         i = True
         while i:
                 try:
@@ -125,8 +125,9 @@ def getInput(): # We can flesh this out with error handling later.
         return command # Return parsed input.
 
 def main():
-        # PLAY STATUS
+        # PLAY METADATA CREATION
         status = 'Playing'
+        flag_ct = 0 # Track how many flags have been placed. Helps show remaining mines.
         
         # DISPLAY CREATION
         display = []
@@ -135,43 +136,51 @@ def main():
 
         # GAME START
         print('Welcome to Minesweeper!') # Welcome the player!
+
+        # COLLECT BOMB AMOUNT (DIFFICULTY)
         i = 0
-        while i == 0:
+        while i == 0: # This while loop is purely for error handling. We don't stop asking until we get workable input!
                 try:
-                        bomb_ct = int(input('How many bombs should there be?: ')) # Get bomb count!
-                        if bomb_ct < 10 or bomb_ct > 20:
+                        bomb_ct = int(input('How many bombs should there be?: '))
+                        if bomb_ct < 10 or bomb_ct > 20: # Bomb count must be between 10 and 20 per the requirements.
                                 raise
                         i = 1
                 except:
                         print("Invalid bomb count. Please input again.")
-        flag_ct = 0
-        displayBoard(display, status, bomb_ct, flag_ct) # Show empty display to user.
 
-        bomb_spaces = random.sample(range(1, 101), bomb_ct) # Get random position of bombs.
+        # INITIAL GAME SETUP (DISPLAY AND BOMB LOCATIONS)
+        displayBoard(display, status, bomb_ct, flag_ct) # Show empty display to user.
+        bomb_spaces = random.sample(range(1, 101), bomb_ct) # Get random position of bombs. Not placed on board yet.
+
+        # FIRST INPUT
         i = 0
-        while i == 0:
-            user_input = getInput() # Get first user input as list in command type, column, row format
-            space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row into actual board space.
-            if user_input[0] == 'f':
-                if display[space] == ' ': # Empty space eligible for flagging
-                                if flag_ct + 1 > bomb_ct:
-                                        print("Cannot flag any more spaces. Please unflag.")
+        while i == 0: # We loop here, placing flags until we get the first 'mine' command.
+            user_input = getInput() # Helper function gives us actionable command.
+            space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row from input into board space.
+            
+            if user_input[0] == 'f': # If we got a flag command, we place the flag on display.
+                if display[space] == ' ': # Empty space means flag is allowed.
+                                if flag_ct + 1 > bomb_ct: # Also got to check that we don't place too many flags.
+                                        print("Cannot flag any more spaces. Please unflag with flag command.")
                                 else:
-                                        display[space] = 'F'
-                                        flag_ct += 1
+                                        display[space] = 'F' # Put a flag on the display!
+                                        flag_ct += 1 # Increment the amount of flags on board.
                 elif display[space] == 'F': # Flag exists in current space, remove it.
-                    display[space] = ' '
-                    flag_ct -= 1
-                displayBoard(display, status, bomb_ct, flag_ct)
-            elif user_input[0] == 'm':
-                i = 1
+                    display[space] = ' ' # Set flag to empty space.
+                    flag_ct -= 1 # Decrement the amount of flags on board.
+                displayBoard(display, status, bomb_ct, flag_ct) # Display the board to the user and loop again!
+            elif user_input[0] == 'm': # We have a mine command!
+                if display[space] == 'F': # Are we mining on a flag space?
+                        print('Cannot flag given space.') # The loop continues...
+                else:
+                        i = 1 # Escape the loop.
         
         # SPACE-BOMB COLLISION PROBLEM
-        if space in bomb_spaces:
+        if space in bomb_spaces: # In the event the selected space is where a mine was planned to be...
                 problem_index = bomb_spaces.index(space) # Isolate where in the list of bomb spaces the user space and bomb collide.
                 while space == bomb_spaces[problem_index]: # While these two values are the same...
                         bomb_spaces[problem_index] = random.randint(1, 100) # ...we will reroll that bomb space.
-                        i = 0 # Then we'll check how many times the new value appears.
+                        i = 0 # Then we'll check how many times the new bomb space value appears.
                         for place in bomb_spaces: # Check every bomb space
                                 if bomb_spaces[problem_index] == place: # If the new space appears in bomb spaces, increment.
                                         i += 1 # This should increment only once (when the new space compares itself).
@@ -181,11 +190,11 @@ def main():
         # CALL BOARD GENERATION                        
         board = generateBoard(bomb_ct, bomb_spaces)
         
-        # UPDATE BOARD
+        # UPDATE BOARD w/ FIRST SPACE
         if board[space] == 0:
-                propagate(space, display, board)
+                propagate(space, display, board) # Reveal spaces around the 0 space.
         else:
-                display[space] = board[space]
+                display[space] = board[space] # Reveal the space itself (it can't be a bomb)
         
         # GAME LOOP BEGINS
         while status == "Playing":
@@ -193,20 +202,25 @@ def main():
                 # printBoard(board) # this helps look at background board to compare against display
                 user_input = getInput()
                 space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row into actual board space.
-                # Our first step is checking if the command is a flag type or mine type.
-                if user_input[0] == 'f': # FLAG SCENARIO
+                
+                # DIFFERENTIATE COMMAND TYPE (FLAG VS MINE COMMAND)
+
+                #FLAG SCENARIO
+                if user_input[0] == 'f':
                         if display[space] == ' ': # Empty space eligible for flagging
-                                if flag_ct + 1 > bomb_ct:
-                                        print("Cannot flag any more spaces. Please unflag.")
+                                if flag_ct + 1 > bomb_ct: # Do we still have flags to use?
+                                        print("Cannot flag any more spaces. Please unflag with flag command.")
                                 else:
-                                        display[space] = 'F'
-                                        flag_ct += 1
+                                        display[space] = 'F' # Put flag on display.
+                                        flag_ct += 1 # Increment the amount of flags.
                         elif display[space] == 'F': # Flag exists in current space, remove it.
-                                display[space] = ' '
-                                flag_ct -= 1
-                        else: # If the space isn't empty or flagged, must be a value. Can't flag.
+                                display[space] = ' ' # Remove flag and empty display space.
+                                flag_ct -= 1 # Decrement the amount of flags.
+                        else: # If the space isn't empty or flagged, must be a value. We can't flag this.
                                 print("Cannot flag given space.")
-                elif user_input[0] == 'm': # MINE SCENARIO
+
+                #MINE SCENARIO
+                elif user_input[0] == 'm':
                         # There's a few things we check here:
                                 # Is the space a bomb?
                                 # Is the space a flag?
@@ -215,26 +229,26 @@ def main():
                         # We will check if the space is a flag first.
                         if display[space] == "F":
                                 print("Cannot mine here. Flag is in the way.")# We don't actually do anything. We just say a flag is in the way.
-                        # Then we check if the space is a bomb.
+                        # We will check if the space is a bomb next.
                         elif board[space] == "*":
                                 for bomb in bomb_spaces: # Reveal all bombs on the board.
                                         display[bomb] = "*"
-                                status = "Loss" # Lose the game.
+                                status = "Loss" # Lose the game. Ends loop.
                                 displayBoard(display, status, bomb_ct, flag_ct) # Display game loss
+                        # We will check if the space is the value 0.
                         elif board[space] == 0: # 0 is a special value because we...
-                                propagate(space, display, board) # ...propagate the neighbor values.
-                        else: # Regular values are simply updated from board.
+                                propagate(space, display, board) # ...reveal the neighbor values.
+                        # The space must be empty and a regular number. Reveal it!
+                        else:
                                 display[space] = board[space]
                                 
-                # After changing the board we will check the win condition.
-                # So...what's our win condition?
-                        # My thought: When there are the same amount of bomb spaces as empty/flag spaces!
+                # CHECK WIN CONDITION
                 remaining_space_check = 0
-                for index in range(1, len(display)):
+                for index in range(1, len(display)): # Compare all board spaces
                         if display[index] == ' ' or display[index] == 'F':
-                                remaining_space_check += 1
-                if remaining_space_check == bomb_ct:
-                        status = "Win!"
-                        displayBoard(display, status, bomb_ct, flag_ct)
+                                remaining_space_check += 1 # Increment remaining empty or flagged spaces.
+                if remaining_space_check == bomb_ct: # When there are the same amount of empty or flagged spaces as bombs on the field...
+                        status = "Victory!" # The game has been won! End game loop.
+                        displayBoard(display, status, bomb_ct, flag_ct) # Display board one last time.
         return
 main()
