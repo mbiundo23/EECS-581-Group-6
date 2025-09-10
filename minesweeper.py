@@ -31,9 +31,13 @@ def propagate(space, display, board):
         display[space] = board[space]
         neighbors = getNeighbors(space)
         for neighbor in neighbors:
-                if board[neighbor] == 0:
+                if board[neighbor] == 0 and display[neighbor] != 'F':
+                        print('Neighbor is:', neighbor)
+                        print('Neighbor value is:', display[neighbor])
                         if display[neighbor] != 0:
                                 propagate(neighbor, display, board)
+                elif display[neighbor] == 'F':
+                        continue
                 else:
                         display[neighbor] = board[neighbor]
 
@@ -148,14 +152,21 @@ def main():
         bomb_spaces = random.sample(range(1, 101), bomb_ct) # Get random position of bombs.
         i = 0
         while i == 0:
-                try:
-                        user_input = getInput() # Get first user input as list in command type, column, row format
-                        if user_input[0] == 'f':
-                                raise
-                        i = 1
-                except:
-                        print("Cannot flag on first input. Try again.")
-        space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row into actual board space.
+            user_input = getInput() # Get first user input as list in command type, column, row format
+            space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row into actual board space.
+            if user_input[0] == 'f':
+                if display[space] == ' ': # Empty space eligible for flagging
+                                if flag_ct + 1 > bomb_ct:
+                                        print("Cannot flag any more spaces. Please unflag.")
+                                else:
+                                        display[space] = 'F'
+                                        flag_ct += 1
+                elif display[space] == 'F': # Flag exists in current space, remove it.
+                    display[space] = ' '
+                    flag_ct -= 1
+                displayBoard(display, status, bomb_ct, flag_ct)
+            elif user_input[0] == 'm':
+                i = 1
         
         # SPACE-BOMB COLLISION PROBLEM
         if space in bomb_spaces:
