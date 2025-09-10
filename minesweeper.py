@@ -197,16 +197,16 @@ def main():
                 space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row into actual board space.
                 # Our first step is checking if the command is a flag type or mine type.
                 if user_input[0] == 'f': # FLAG SCENARIO
-                        if display[space] == ' ':
+                        if display[space] == ' ': # Empty space eligible for flagging
                                 if flag_ct + 1 > bomb_ct:
                                         print("Cannot flag any more spaces. Please unflag.")
                                 else:
                                         display[space] = 'F'
                                         flag_ct += 1
-                        elif display[space] == 'F':
+                        elif display[space] == 'F': # Flag exists in current space, remove it.
                                 display[space] = ' '
                                 flag_ct -= 1
-                        else:
+                        else: # If the space isn't empty or flagged, must be a value. Can't flag.
                                 print("Cannot flag given space.")
                 elif user_input[0] == 'm': # MINE SCENARIO
                         # There's a few things we check here:
@@ -217,14 +217,26 @@ def main():
                         # We will check if the space is a flag first.
                         if display[space] == "F":
                                 print("Cannot mine here. Flag is in the way.")# We don't actually do anything. We just say a flag is in the way.
+                        # Then we check if the space is a bomb.
                         elif board[space] == "*":
-                                for bomb in bomb_spaces:
+                                for bomb in bomb_spaces: # Reveal all bombs on the board.
                                         display[bomb] = "*"
-                                status = "Loss"
-                                displayBoard(display, status, bomb_ct, flag_ct)
-                        elif board[space] == 0:
-                                propagate(space, display, board)
-                        else:
+                                status = "Loss" # Lose the game.
+                                displayBoard(display, status, bomb_ct, flag_ct) # Display game loss
+                        elif board[space] == 0: # 0 is a special value because we...
+                                propagate(space, display, board) # ...propagate the neighbor values.
+                        else: # Regular values are simply updated from board.
                                 display[space] = board[space]
+                                
+                # After changing the board we will check the win condition.
+                # So...what's our win condition?
+                        # My thought: When there are the same amount of bomb spaces as empty/flag spaces!
+                remaining_space_check = 0
+                for index in range(1, len(display)):
+                        if display[index] == ' ' or display[index] == 'F':
+                                remaining_space_check += 1
+                if remaining_space_check == bomb_ct:
+                        status = "Win!"
+                        displayBoard(display, status, bomb_ct, flag_ct)
         return
 main()
