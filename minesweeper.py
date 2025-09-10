@@ -1,16 +1,5 @@
 import random
 
-# Check list of things to get done:
-# - Create game loop
-# - Implement space propogation
-# - Error handle user input function
-# - Track status in game loop
-# - Track flag amount.
-# - Create response to game win / game loss
-# - First clicked space and neighbors all mine free (optional)
-# - Implement official "mine" response
-# - Implement official "flag" response
-
 def getNeighbors(num): # Helps narrow the spaces to check bombs for a given space
         # First, we'll classify the num as LeftEdge or RightEdge
         isLeftEdge = False
@@ -109,7 +98,7 @@ def getInput(): # We can flesh this out with error handling later.
                                 raise
                         inp_string = inp_string[1:len(inp_string)] # Remove first character from input string.
         
-                        col = inp_string[len(inp_string)-1].lower() # Look at end of input string for column letter.
+                        col = inp_string[len(inp_string)-1] # Look at end of input string for column letter.
                         cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] # Bank of possible letters.
                         if col not in cols:
                                 raise
