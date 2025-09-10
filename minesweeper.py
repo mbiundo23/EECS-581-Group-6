@@ -32,8 +32,6 @@ def propagate(space, display, board):
         neighbors = getNeighbors(space)
         for neighbor in neighbors:
                 if board[neighbor] == 0 and display[neighbor] != 'F':
-                        print('Neighbor is:', neighbor)
-                        print('Neighbor value is:', display[neighbor])
                         if display[neighbor] != 0:
                                 propagate(neighbor, display, board)
                 elif display[neighbor] == 'F':
