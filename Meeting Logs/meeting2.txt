@@ -1,0 +1,8 @@
+Team Meeting 09.09
+WHEN: Tuesday, September 9th @ 8:30 pm
+PURPOSE: Second team meeting, tracking our progress
+ATTENDANCE: Gavin Billinger, Bisshoy Battacharjee, Joshua Welicky, Mark Kitchin, Maximilian Biundo (all virtually)
+
+We spent the meeting tracking our user stories and how much work remained on the implementation. While most features are finished, we have ambitions to create an account and leaderboard system to track scores between specific players. 
+We put together user stories for those implementations. We plan to work on these and mesh them into the current code.
+We are also considering refactoring the code to be more modular and extensible. We will understand to what extent this is necessary at the next scrum meeting.
