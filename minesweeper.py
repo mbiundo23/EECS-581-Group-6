@@ -1,4 +1,5 @@
 import random
+import time
 
 BOMB = "💣"
 FLAG = "🚩"
@@ -37,7 +38,6 @@ def loadPlayerData(player_name):
             for line in f:
                 key, value = line.strip().split(":", 1)
                 data[key] = value
-            data["display"] += ' '
     except FileNotFoundError:
         pass
     '''
@@ -45,6 +45,7 @@ def loadPlayerData(player_name):
     This is because of the strip() call made for each line. This fix will
     have to do.
     '''
+    data["display"] += ' '
     return data
 
 
@@ -150,8 +151,6 @@ def getInput():
     i = True
     while i:
         try:
-            print('Controls: To mine at row 2, column c, type "m2c"')
-            print('          To toggle flag at row 8, column c, type "f8c"\n')
             inp_string = input('Please give command: ')
             com_type = inp_string[0].lower()
             if com_type not in ["m", "f", "q"]:
@@ -195,7 +194,7 @@ def main():
         print("Resuming previous game if exists.")
     else:
         print("No previous data found. Starting fresh!")
-
+    
     # Load previous game state if available
     bomb_ct = int(player_data.get("bomb_count", "10"))
 
@@ -213,6 +212,7 @@ def main():
         display += [' '] * 100
 
     flag_ct = int(player_data.get("flag_ct", "0"))
+    
     status = player_data.get("status", "Playing")
 
     print('Welcome to Minesweeper!')
@@ -259,6 +259,7 @@ def main():
     but we'll hold off until we know if we need to make a new (class-based) implementation.
     '''
     board = generateBoard(bomb_spaces)
+    start_time = time.time()  # Record the start time
 
 
     '''
@@ -266,6 +267,9 @@ def main():
     NEVER get to play another game.
     '''
     while status == "Playing":
+        checktime = time.time()
+        cur_time = checktime - start_time #check the current time and send that info to the user
+        print("Time: ", round(cur_time))
         displayBoard(display, status, bomb_ct, flag_ct)
         user_input = getInput()
         if user_input[0] == "q":
@@ -311,11 +315,15 @@ def main():
             if display[index] == ' ' or display[index] == FLAG:
                 remaining_space_check += 1
         if remaining_space_check == bomb_ct:
+            end_time = time.time()  # Record the start time
+            elapsed_time = end_time - start_time
             status = "Victory!"
             displayBoard(display, status, bomb_ct, flag_ct)
             print("\n Congratulations! You Won! \n")
+            print("Time:", round(elapsed_time))
             break
-
+        
+        
 
         '''
         Subsequently makes it possible to cheat. Consider the following scenario:
@@ -330,6 +338,7 @@ def main():
         player_data["flag_ct"] = str(flag_ct)
         player_data["status"] = status
         savePlayerData(player_name, player_data)
+        
 
     return
 
