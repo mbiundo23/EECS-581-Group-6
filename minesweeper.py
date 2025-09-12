@@ -38,6 +38,7 @@ def loadPlayerData(player_name):
             for line in f:
                 key, value = line.strip().split(":", 1)
                 data[key] = value
+            data["display"] += ' '
     except FileNotFoundError:
         pass
     '''
@@ -45,7 +46,6 @@ def loadPlayerData(player_name):
     This is because of the strip() call made for each line. This fix will
     have to do.
     '''
-    data["display"] += ' '
     return data
 
 
