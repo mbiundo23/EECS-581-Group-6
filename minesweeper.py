@@ -3,6 +3,11 @@ import random
 BOMB = "💣"
 FLAG = "🚩"
 
+
+'''
+I was under the impression that profiles would only save the "high score", like
+the lowest time to complete a game.
+'''
 def choosePlayerProfile():
     print("Available profiles:")
     import os
@@ -34,6 +39,12 @@ def loadPlayerData(player_name):
                 data[key] = value
     except FileNotFoundError:
         pass
+    '''
+    I noticed that loading in a game caused the last cell to have no space. 
+    This is because of the strip() call made for each line. This fix will
+    have to do.
+    '''
+    data["display"] += ' '
     return data
 
 
@@ -97,6 +108,12 @@ def generateBoard(bomb_spaces):
     return board
 
 
+'''
+Why is this here? It doesn't seem to be used at all.
+Looks like an early method of printing boards that 
+didn't work out. Could probably delete for the final
+product.
+'''
 def printBoard(board):
     i = 0
     string = ''
@@ -117,6 +134,7 @@ def displayBoard(display, status, bomb_ct, flag_ct):
     test_string = ''
     for i in range(10):
         for j in range(10):
+            #test_string += '[' + str((((i * 10) + j) + 1)) + ']'
             test_string += '[' + str(display[(((i * 10) + j) + 1)]) + ']'
         if (i + 1 != 10):
             print(str(i + 1) + '  ' + test_string)
@@ -220,11 +238,31 @@ def main():
             except:
                 print("Invalid bomb count. Please input again.")
 
+
+    '''
+    This is making the board print twice at the beginning of the program.
+    '''
     displayBoard(display, status, bomb_ct, flag_ct)
 
     # If no previous game, generate board
+    '''
+    No if statement, so it generates everytime, not that it's a bad thing.
+
+
+    Also, since generateBoard() is called before ANY move is made, it IS POSSIBLE
+    to select a mine on the FIRST MOVE.
+
+    It looks like there was some kind of mechanism preventing this, but it was
+    overwritten in a subsequent commit. We'll have to implement a new mechanism,
+    but we'll hold off until we know if we need to make a new (class-based) implementation.
+    '''
     board = generateBoard(bomb_spaces)
 
+
+    '''
+    As soon as a user loses or wins a game, the status will not be playing, meaning a player will
+    NEVER get to play another game.
+    '''
     while status == "Playing":
         displayBoard(display, status, bomb_ct, flag_ct)
         user_input = getInput()
@@ -276,6 +314,14 @@ def main():
             print("\n Congratulations! You Won! \n")
             break
 
+
+        '''
+        Subsequently makes it possible to cheat. Consider the following scenario:
+            -- Start a new game.
+            -- Flag a cell as the first move.
+            -- Examine the text file generated after the first move.
+            -- ALL BOMB CELLS ARE STORED.
+        '''
         # Autosave after each turn
         player_data["bomb_spaces"] = ','.join(str(b) for b in bomb_spaces)  # store bomb positions
         player_data["display"] = ','.join(str(x) for x in display[1:])  # store display board
