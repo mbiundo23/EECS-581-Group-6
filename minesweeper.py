@@ -37,6 +37,7 @@ def loadPlayerData(player_name):
             for line in f:
                 key, value = line.strip().split(":", 1)
                 data[key] = value
+            data["display"] += ' '
     except FileNotFoundError:
         pass
     '''
@@ -44,7 +45,6 @@ def loadPlayerData(player_name):
     This is because of the strip() call made for each line. This fix will
     have to do.
     '''
-    data["display"] += ' '
     return data
 
 
@@ -150,6 +150,8 @@ def getInput():
     i = True
     while i:
         try:
+            print('Controls: To mine at row 2, column c, type "m2c"')
+            print('          To toggle flag at row 8, column c, type "f8c"\n')
             inp_string = input('Please give command: ')
             com_type = inp_string[0].lower()
             if com_type not in ["m", "f", "q"]:
