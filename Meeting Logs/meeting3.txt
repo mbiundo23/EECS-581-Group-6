@@ -1,0 +1,7 @@
+Team Meeting 09.16
+WHEN: Tuesday, September 16th @ 8:30 pm
+PURPOSE: Third team meeting, finalizing progress
+ATTENDANCE: Gavin Billinger, Bisshoy Battacharjee, Joshua Welicky, Mark Kitchin, Maximilian Biundo (all virtually)
+
+We went over some updates regarding our final product. We have most of the code finalized, but some additions still need to be made. 
+The rest of the week will be spent catching up on documentation and stress testing the game.
