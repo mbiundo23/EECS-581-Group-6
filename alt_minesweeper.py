@@ -125,6 +125,10 @@ class Game:
                                 #print(f"Cell {neighbor}")
                                 self.board[neighbor].covered = False
 
+        def printErr(self, msg):
+                print(msg)
+                input("Press [ENTER] to continue...")
+
         def getInput(self): # Parses given command into usable interpretation for program.
                 i = True
                 while i:
@@ -147,9 +151,8 @@ class Game:
                                         raise
                                 i = False
                         except:
-                                print('\nCommand is faulty please follow command, row, column format.')
-                                print('(Hint 1: To mine at row 1, column a, type "m1a")')
-                                print('(Hint 2: To flag at row 7, column g, type "f7g")\n')
+                                err_msg = '\nCommand is faulty please follow command, row, column format.\n(Hint 1: To mine at row 1, column a, type "m1a")\n(Hint 2: To flag at row 7, column g, type "f7g")'
+                                self.printErr(err_msg)
                                 continue
                 
                 command = [] # Create command value.
@@ -172,11 +175,6 @@ class Game:
                         except:
                                 print("Invalid bomb count. Please input again.")
                 self.bomb_spaces = random.sample(range(1,101), self.bomb_ct)
-
-        
-        def printErr(self, msg):
-                print(msg)
-                input("Press [ENTER] to continue...")
 
 
 
