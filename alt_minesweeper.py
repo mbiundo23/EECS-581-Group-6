@@ -1,6 +1,12 @@
 import random
 import os
 
+def clear():
+        if os.name == 'nt':
+                os.system('cls')
+        else:
+                os.system('clear')
+
 class Cell:
         def __init__(self):
                 self.adjMines = 0
@@ -261,13 +267,13 @@ class Game:
                         self.printGame()
                         #print(f"Bomb Spaces: {self.bomb_spaces}")
                         self.move(True)
-                        os.system('clear')
+                        clear()
                 while self.status == 'Playing':
                         self.printGame()
                         #print(f"Bomb Spaces: {self.bomb_spaces}")
                         self.move()
                         self.checkWin()
-                        os.system('clear')
+                        clear()
                 self.printGame()
                 return
 
@@ -303,7 +309,7 @@ class GameManager:
                         self.newGame()
                         choice = input("Play again?(yes/no): ")
                         if choice == 'yes':
-                                os.system('clear')
+                                clear()
                                 continue
                         else:
                                 break
