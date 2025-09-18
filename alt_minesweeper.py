@@ -251,7 +251,7 @@ class Game:
                         if self.board[index].covered:
                                 remaining_space_check += 1 # Increment remaining empty or flagged spaces.
                 if remaining_space_check == self.bomb_ct: # When there are the same amount of empty or flagged spaces as bombs on the field...
-                        status = "Victory!" # The game has been won! End game loop.
+                        self.status = "Victory!" # The game has been won! End game loop.
 
         def checkBombPlacement(self):
                 bombed_spaces = 0
