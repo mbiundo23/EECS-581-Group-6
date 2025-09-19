@@ -270,7 +270,7 @@ class Game:
         If it is set to True, the selected space is checked for presence in the randomly generated bomb_spaces list. 
         If it is present, then a new bomb_space is generated. 
         Once the bomb_spaces list is adjusted, placeBombs() is called, installing bombs in the board attribute. 
-        Then, the Cell is uncovered as normal. If a bomb space is selected and prebomb is False, all bomb spaces are uncovered, and the game status is set to “Loss”.
+        Then, the Cell is uncovered as normal. If a bomb space is selected and prebomb is False, all bomb spaces are uncovered, and the game status is set to “Game Over: Loss”.
         '''
         def move(self, prebomb=False):
                 user_input = self.getInput() # Helper function gives us actionable command.
@@ -323,7 +323,7 @@ class Game:
                                         if self.board[space].bomb:
                                                 for bomb in self.bomb_spaces: # Reveal all bombs on the board.
                                                         self.board[bomb].covered = False
-                                                self.status = "Loss" # Lose the game.
+                                                self.status = "Game Over: Loss" # Lose the game.
                                         # We will check if the space is the value 0.
                                         elif self.board[space].adjMines == 0: # 0 is a special value because we...
                                                 self.propagate(space) # ...reveal the neighbor values.
