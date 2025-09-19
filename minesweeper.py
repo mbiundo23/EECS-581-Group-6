@@ -414,7 +414,7 @@ class GameManager: # Handles showing instructions, new games, and replayability
                 while True:
                         self.newGame() # Start a new game
                         choice = input("Play again?(yes/no): ") # Ask if player want to reply
-                        if choice == 'yes':
+                        if choice.lower() == 'yes' or choice.lower() == 'y':
                                 clear() # Clear screen for a fresh game
                                 continue # Starts new game
                         else:
