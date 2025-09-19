@@ -276,13 +276,13 @@ class Game:
                         self.printGame()
                         #print(f"Bomb Spaces: {self.bomb_spaces}")
                         self.move(True)
-                        os.system('clear')
+                        clear()
                 while self.status == 'Playing':
                         self.printGame() # Display the current board
                         #print(f"Bomb Spaces: {self.bomb_spaces}")
                         self.move()
                         self.checkWin()
-                        os.system('clear') # Clear screen for a fresh board display
+                        clear() # Clear screen for a fresh board display
                 self.printGame()
                 return
 
@@ -318,7 +318,7 @@ class GameManager: # Handles showing instructions, new games, and replayability
                         self.newGame() # Start a new game
                         choice = input("Play again?(yes/no): ") # Ask if player want to reply
                         if choice == 'yes':
-                                os.system('clear') # Clear screen for a fresh game
+                                clear() # Clear screen for a fresh game
                                 continue # Starts new game
                         else:
                                 break # Exit loop and end the program
