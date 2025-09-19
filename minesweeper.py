@@ -4,7 +4,7 @@ Description: Implementation of a terminal based Minesweeper game made with Pytho
 Inputs: User gives input for uncovering or flagging cells and can change difficulty level by selecting bomb amount.
 Outputs: Game board and progression is showed on display.
 External sources: None
-Authors: Bisshoy Bhattacharjee, Josh Welicky, Max Biundo, Marcus, Gavin
+Authors: Bisshoy Bhattacharjee, Josh Welicky, Max Biundo, Marcus Kitchin, Gavin Billinger
 Last updated: 9/19/2025
 '''
 import random
