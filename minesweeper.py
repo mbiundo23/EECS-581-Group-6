@@ -10,6 +10,12 @@ Last updated: 9/17/2025
 import random
 import os
 
+def clear():
+        if os.name == 'nt':
+                os.system('cls')
+        else:
+                os.system('clear')
+
 class Cell:
         #Represents a single cell on the minesweeper board
         def __init__(self): # Initialize a cell with default values
@@ -121,7 +127,6 @@ class Game:
                                 if (self.board[index].bomb): # If the board at that neighbor is a bomb...
                                         space_val += 1 # ...increment space value
                         self.board[i].adjMines = space_val # Set value at that board space.
-
         def propagate(self, space): # Recursively uncovers neighbouring cells starting from a cell with 0 nearby mines.
                 self.board[space].covered = False
                 neighbors = self.board.getNeighbors(space)
@@ -184,8 +189,8 @@ class Game:
                                 i = 1
                         except:
                                 print("Invalid bomb count. Please input again.")
-                self.bomb_spaces = random.sample(range(1,101), self.bomb_ct) # Randomly select bomb locations on the board without duplicates
 
+                self.bomb_spaces = random.sample(range(1,101), self.bomb_ct) # Randomly select bomb locations on the board without duplicates
 
 
 
@@ -255,8 +260,8 @@ class Game:
                         if self.board[index].covered:
                                 remaining_space_check += 1 # Increment remaining empty or flagged spaces.
                 if remaining_space_check == self.bomb_ct: # When there are the same amount of empty or flagged spaces as bombs on the field...
-                        status = "Victory!" # The game has been won! End game loop.
-
+                        self.status = "Victory!" # The game has been won! End game loop.
+                    
         def checkBombPlacement(self): # Check if all bombs have been correctly placed on the board
                 bombed_spaces = 0
                 for index in range(1, len(self.board)):
@@ -283,7 +288,6 @@ class Game:
 
 
 
-
 class GameManager: # Handles showing instructions, new games, and replayability
         def __init__(self):
                 return
@@ -306,7 +310,8 @@ class GameManager: # Handles showing instructions, new games, and replayability
                 #print('- Type "q" to quit and save the game.')
                 print('- Win by uncovering every safe space. If you hit a mine, you lose!.')
                 print('--------------------------------')
-        
+       
+      
         def start(self): # Start the game manager to show instrution, run game and handle replay
                 self.start_message() # Displau instruction to player
                 while True:
