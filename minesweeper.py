@@ -291,7 +291,7 @@ class Game:
                 
                 elif user_input[0] == 'm': # We have a mine command!
                         if self.board[space].flagged: # Are we mining on a flag space?
-                                self.printErr('Cannot mine a flagg given space.') # We don't actually do anything. We just say a flag is in the way.
+                                self.printErr('Cannot mine a flag given space.') # We don't actually do anything. We just say a flag is in the way.
                         else:
                                 if prebomb:
                                         # SPACE-BOMB COLLISION PROBLEM
