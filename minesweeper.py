@@ -9,6 +9,7 @@ Last updated: 9/17/2025
 '''
 import random
 import os
+import time
 
 def clear():
         if os.name == 'nt':
@@ -102,9 +103,25 @@ class Game:
                 self.flag_ct = 0 # Number of flags currently placed
                 self.bomb_ct = 0 # Total bombs in the game
                 self.bomb_spaces = [] # List of bomb positions
+                self.start_time = time.time() #initialize the start time of the game
                 self.board = Board() # initialize the game board
 
+        def timeCheck(self):# Helper function to check the elapsed time of the game
+                cur_time = time.time() #check the time
+                elapsed_time = cur_time - self.start_time #subtract the start time from recent check
+                return elapsed_time #return the current time unformatted
+        
+        def displayTime(self): #function to display the current time to the user
+                elapsed_time = self.timeCheck() #do a time check
+                hours = int(elapsed_time // 3600 % 24) #mathematical functions to formate raw number
+                minutes = int(elapsed_time // 60 % 60)
+                seconds = int(elapsed_time % 60)
+                formatted_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}" #format into hh:mm:ss
+                print("Time:", formatted_time) #print
+
+
         def printGame(self): # Display the current board, game status, and number of remaining mines
+                self.displayTime()
                 self.board.display() # Print the board
                 print("Current status:", self.status) # Shows game status
                 print("Mines remaining:", self.bomb_ct - self.flag_ct, "\n") # Shows remaining mines
@@ -289,6 +306,7 @@ class Game:
 
 class GameManager: # Handles showing instructions, new games, and replayability
         def __init__(self):
+
                 return
         
         def newGame(self): # Creates a new game instance and start playing it
@@ -312,7 +330,7 @@ class GameManager: # Handles showing instructions, new games, and replayability
        
       
         def start(self): # Start the game manager to show instrution, run game and handle replay
-                self.start_message() # Displau instruction to player
+                self.start_message() # Displays instruction to player
                 while True:
                         self.newGame() # Start a new game
                         choice = input("Play again?(yes/no): ") # Ask if player want to reply
