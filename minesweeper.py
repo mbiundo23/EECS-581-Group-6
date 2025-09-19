@@ -101,7 +101,6 @@ class Game:
                 self.status = 'Playing' # Current game state
                 self.flag_ct = 0 # Number of flags currently placed
                 self.bomb_ct = 0 # Total bombs in the game
-                self.first_click = False # Tracks if the first move is made
                 self.bomb_spaces = [] # List of bomb positions
                 self.board = Board() # initialize the game board
 
