@@ -1,346 +1,325 @@
+'''
+File: alt_minesweeper.py
+Description: Implementation of a terminal based Minesweeper game made with Python.
+Inputs: User gives input for uncovering or flagging cells and can change difficulty level by selecting bomb amount.
+Outputs: Game board and progression is showed on display.
+External sources: None
+Authors: Bisshoy Bhattacharjee, Josh Welicky, Max Biundo, Marcus, Gavin
+Last updated: 9/17/2025
+'''
 import random
-import time
+import os
 
-BOMB = "💣"
-FLAG = "🚩"
+class Cell:
+        #Represents a single cell on the minesweeper board
+        def __init__(self): # Initialize a cell with default values
+                self.adjMines = 0 # Number of adjacent mines
+                self.covered = True # If the cell is still covered
+                self.bomb = False # If the cell contains a bomb
+                self.flagged = False # If the cell is flagged by the player
 
-
-'''
-I was under the impression that profiles would only save the "high score", like
-the lowest time to complete a game.
-'''
-def choosePlayerProfile():
-    print("Available profiles:")
-    import os
-    profiles = [f.replace(".txt", "") for f in os.listdir() if f.endswith(".txt")]
-    if profiles:
-        for i, p in enumerate(profiles, 1):
-            print(f"{i}. {p}")
-    else:
-        print("No profiles found.")
-
-    while True:
-        choice = input("Enter profile name to use (or new name to create): ").strip()
-        if choice:
-            return choice
-
-
-def savePlayerData(player_name, data):
-    with open(f"{player_name}.txt", "w", encoding="utf-8") as f:
-        for key, value in data.items():
-            f.write(f"{key}:{value}\n")
-
-
-def loadPlayerData(player_name):
-    data = {}
-    try:
-        with open(f"{player_name}.txt", "r", encoding="utf-8") as f:
-            for line in f:
-                key, value = line.strip().split(":", 1)
-                data[key] = value
-            data["display"] += ' '
-    except FileNotFoundError:
-        pass
-    '''
-    I noticed that loading in a game caused the last cell to have no space. 
-    This is because of the strip() call made for each line. This fix will
-    have to do.
-    '''
-    return data
-
-
-def getNeighbors(num):  # Helps narrow the spaces to check bombs for a given space
-    isLeftEdge = False
-    isRightEdge = False
-    if ((num - 1) % 10) == 0:
-        isLeftEdge = True
-    if (num % 10) == 0:
-        isRightEdge = True
-    neighbors = []
-    if not isRightEdge:
-        neighbors.append(num + 1)
-    if not isLeftEdge:
-        neighbors.append(num - 1)
-    if (num + 10 < 101):
-        neighbors.append(num + 10)
-    if (num - 10 > 0):
-        neighbors.append(num - 10)
-    if (not isLeftEdge) and (num - 10 > 0):
-        neighbors.append(num - 11)
-    if (not isRightEdge) and (num - 10 > 0):
-        neighbors.append(num - 9)
-    if (not isLeftEdge) and (num + 10 < 101):
-        neighbors.append(num + 9)
-    if (not isRightEdge) and (num + 10 < 101):
-        neighbors.append(num + 11)
-    return neighbors
-
-
-def propagate(space, display, board):
-    display[space] = board[space]
-    neighbors = getNeighbors(space)
-    for neighbor in neighbors:
-        if board[neighbor] == 0 and display[neighbor] != FLAG:
-            if display[neighbor] != 0:
-                propagate(neighbor, display, board)
-        elif display[neighbor] == FLAG:
-            continue
-        else:
-            display[neighbor] = board[neighbor]
-
-
-def generateBoard(bomb_spaces):
-    board = []
-    for i in range(1, 102):
-        board.append(0)
-    for i in range(len(bomb_spaces)):
-        bomb_idx = bomb_spaces[i]
-        board[bomb_idx] = BOMB
-
-    for i in range(1, len(board)):
-        if (board[i] == BOMB):
-            continue
-        space_val = 0
-        neighbors = getNeighbors(i)
-        for index in neighbors:
-            if (board[index] == BOMB):
-                space_val += 1
-        board[i] = space_val
-    return board
-
-
-'''
-Why is this here? It doesn't seem to be used at all.
-Looks like an early method of printing boards that 
-didn't work out. Could probably delete for the final
-product.
-'''
-def printBoard(board):
-    i = 0
-    string = ''
-    for j in range(len(board)):
-        if j == 0:
-            continue
-        string += str(board[j]) + ' '
-        i += 1
-        if i == 10:
-            print(string)
-            i = 0
-            string = ''
-    return
-
-
-def displayBoard(display, status, bomb_ct, flag_ct):
-    print('\n    A  B  C  D  E  F  G  H  I  J  ')
-    test_string = ''
-    for i in range(10):
-        for j in range(10):
-            #test_string += '[' + str((((i * 10) + j) + 1)) + ']'
-            test_string += '[' + str(display[(((i * 10) + j) + 1)]) + ']'
-        if (i + 1 != 10):
-            print(str(i + 1) + '  ' + test_string)
-        else:
-            print(str(i + 1) + ' ' + test_string)
-        test_string = ''
-    print("Current status:", status)
-    print("Mines remaining:", bomb_ct - flag_ct, "\n")
-    return
-
-
-def getInput():
-    i = True
-    while i:
-        try:
-            inp_string = input('Please give command: ')
-            com_type = inp_string[0].lower()
-            if com_type not in ["m", "f", "q"]:
-                raise
-            if com_type == "q":
-                return [com_type]
-            inp_string = inp_string[1:len(inp_string)]
-            col = inp_string[len(inp_string) - 1]
-            cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
-            if col not in cols:
-                raise
-            col = cols.index(col) + 1
-            inp_string = inp_string[:len(inp_string) - 1]
-            row = int(inp_string)
-            if row not in range(1, 11):
-                raise
-            i = False
-        except:
-            print('\nCommand is faulty please follow command, row, column format.')
-            print('(Hint 1: To mine at row 1, column a, type "m1a")')
-            print('(Hint 2: To flag at row 7, column g, type "f7g")\n')
-            continue
-
-    command = []
-    command.append(com_type)
-    command.append(row)
-    command.append(col)
-
-    return command
-
-
-def minereveal(display, bomb_spaces):
-    for bomb in bomb_spaces:
-        display[bomb] = BOMB
-
-def main():
-    player_name = choosePlayerProfile()
-    player_data = loadPlayerData(player_name)
-    print(f"Welcome {player_name}!")
-    if player_data:
-        print("Resuming previous game if exists.")
-    else:
-        print("No previous data found. Starting fresh!")
-    
-    # Load previous game state if available
-    bomb_ct = int(player_data.get("bomb_count", "10"))
-
-    bomb_spaces_str = player_data.get("bomb_spaces", "")
-    if bomb_spaces_str:
-        bomb_spaces = [int(b) for b in bomb_spaces_str.split(',')]
-    else:
-        bomb_spaces = random.sample(range(1, 101), bomb_ct)
-
-    display_str = player_data.get("display", "")
-    display = [' ']  # index 0 placeholder
-    if display_str:
-        display += display_str.split(',')
-    else:
-        display += [' '] * 100
-
-    flag_ct = int(player_data.get("flag_ct", "0"))
-    
-    status = player_data.get("status", "Playing")
-
-    print('Welcome to Minesweeper!')
-    print('--------------------------------')
-    print('HOW TO PLAY:')
-    print('- Goal: uncover all safe spaces without hitting a mine.')
-    print('- The numbers show how many mines are in the surrounding spaces.')
-    print('- Commands (one command per turn):')
-    print('    m[row][col] → Uncover a space.')
-    print('        Example: m3b means uncover row 3, column b.')
-    print('    f[row][col] → Flag or unflag a space.')
-    print('        Example: f5h means place/remove a flag at row 5, column h.')
-    print('- Type "q" to quit and save the game.')
-    print('- Win by uncovering every safe space. If you hit a mine, you lose!.')
-    print('--------------------------------')
-
-    if not bomb_spaces_str:
-        i = 0
-        while i == 0:
-            try:
-                bomb_ct = int(input('How many bombs should there be?: '))
-                if bomb_ct < 10 or bomb_ct > 20:
-                    raise
-                i = 1
-            except:
-                print("Invalid bomb count. Please input again.")
-
-
-    '''
-    This is making the board print twice at the beginning of the program.
-    '''
-    displayBoard(display, status, bomb_ct, flag_ct)
-
-    # If no previous game, generate board
-    '''
-    No if statement, so it generates everytime, not that it's a bad thing.
-
-
-    Also, since generateBoard() is called before ANY move is made, it IS POSSIBLE
-    to select a mine on the FIRST MOVE.
-
-    It looks like there was some kind of mechanism preventing this, but it was
-    overwritten in a subsequent commit. We'll have to implement a new mechanism,
-    but we'll hold off until we know if we need to make a new (class-based) implementation.
-    '''
-    board = generateBoard(bomb_spaces)
-    start_time = time.time()  # Record the start time
-
-
-    '''
-    As soon as a user loses or wins a game, the status will not be playing, meaning a player will
-    NEVER get to play another game.
-    '''
-    while status == "Playing":
-        checktime = time.time()
-        cur_time = checktime - start_time #check the current time and send that info to the user
-        print("Time: ", round(cur_time))
-        displayBoard(display, status, bomb_ct, flag_ct)
-        user_input = getInput()
-        if user_input[0] == "q":
-            # Save game state and exit
-            player_data["bomb_spaces"] = ','.join(str(b) for b in bomb_spaces)
-            player_data["display"] = ','.join(str(x) for x in display[1:])  # skip index 0
-            player_data["flag_ct"] = str(flag_ct)
-            player_data["status"] = status
-            savePlayerData(player_name, player_data)
-            print("Game saved. You can resume later!")
-            return
-
-        space = ((user_input[1] - 1) * 10) + user_input[2]
-
-        if user_input[0] == 'f':
-            if display[space] == ' ':
-                if flag_ct + 1 > bomb_ct:
-                    print("Cannot flag any more spaces. Please unflag with flag command.")
+        def __str__(self):
+                #for debugging - shows bomb if uncovered
+                if self.bomb and not self.covered:
+                        return "💣"
+                if self.flagged:
+                        return "🚩" # Shows flag if flagged
+                elif self.covered:
+                        return '  ' # Empty string for covered cell
                 else:
-                    display[space] = FLAG
-                    flag_ct += 1
-            elif display[space] == FLAG:
-                display[space] = ' '
-                flag_ct -= 1
-            else:
-                print("Cannot flag given space.")
+                        return f" {str(self.adjMines)}" # Show number of adjacent mines if uncovered
 
-        elif user_input[0] == 'm':
-            if display[space] == FLAG:
-                print("Cannot mine here. Flag is in the way.")
-            elif board[space] == BOMB:
-                minereveal(display, bomb_spaces)
-                status = "Game Over"
-                displayBoard(display, status, bomb_ct, flag_ct)
-                print("\nYou Hit a Mine! Game Over. \n")
-            elif board[space] == 0:
-                propagate(space, display, board)
-            else:
-                display[space] = board[space]
 
-        remaining_space_check = 0
-        for index in range(1, len(display)):
-            if display[index] == ' ' or display[index] == FLAG:
-                remaining_space_check += 1
-        if remaining_space_check == bomb_ct:
-            end_time = time.time()  # Record the start time
-            elapsed_time = end_time - start_time
-            status = "Victory!"
-            displayBoard(display, status, bomb_ct, flag_ct)
-            print("\n Congratulations! You Won! \n")
-            print("Time:", round(elapsed_time))
-            break
+class Board: # Represents the minesweeper board and handles neighbor calcualtions and display"
+        def __init__(self): # Initialize the board with 101 cell instances (inded 1-101)
+                self._board = []
+                for i in range(1, 102):
+                        self._board.append(Cell()) # Create a new cell for each board position
+
+        def __getitem__(self, i):  # OVERLOAD INDEXING
+                if isinstance(i, int):
+                        return self._board[i] # Return the cell at index i
+                else:
+                        raise # Raises error if index is not an integer
         
+        def __len__(self): # Returns the total number of cells on the board
+                return len(self._board)
         
+        def display(self): # FUNCTION TO DISPLAY USER'S BOARD
+                print('     A   B   C   D   E   F   G   H   I   J  ') # Prints column header
+                test_string = ''
+                for i in range(10): # Loop over rows
+                        for j in range(10): # Loop over columns
+                                test_string += '[' + str(self._board[(((i*10)+j)+1)]) +']'
+                        if (i+1 != 10): # Prints rows with built string above.
+                                print(str(i+1) + '  ' + test_string)
+                        else: # Row 10 requires less space between itself and test string.
+                                print(str(i+1) + ' ' + test_string)
+                        test_string = '' # Empty test string.
+                return
 
-        '''
-        Subsequently makes it possible to cheat. Consider the following scenario:
-            -- Start a new game.
-            -- Flag a cell as the first move.
-            -- Examine the text file generated after the first move.
-            -- ALL BOMB CELLS ARE STORED.
-        '''
-        # Autosave after each turn
-        player_data["bomb_spaces"] = ','.join(str(b) for b in bomb_spaces)  # store bomb positions
-        player_data["display"] = ','.join(str(x) for x in display[1:])  # store display board
-        player_data["flag_ct"] = str(flag_ct)
-        player_data["status"] = status
-        savePlayerData(player_name, player_data)
+        def getNeighbors(self, num): # Helps narrow the spaces to check bombs for a given space
+                # First, we'll classify the num as LeftEdge or RightEdge
+                isLeftEdge = False
+                isRightEdge = False
+                if ((num-1)%10) == 0: # This singles out 1, 11, 21, 31, etc as left edges.
+                        isLeftEdge = True
+                if (num%10) == 0: # This singles out 10, 20, 30, 40, as right edges.
+                        isRightEdge = True
+                neighbors = []
+                if not isRightEdge:
+                        neighbors.append(num + 1) # Add right
+                if not isLeftEdge:
+                        neighbors.append(num - 1) # Add left
+                if (num + 10 < 101):
+                        neighbors.append(num + 10) # Add down
+                if (num - 10 > 0):
+                        neighbors.append(num - 10) # Add up
+                if (not isLeftEdge) and (num-10 > 0):
+                        neighbors.append(num - 11) # Add up-left
+                if (not isRightEdge) and (num-10 > 0):
+                        neighbors.append(num - 9) # Add up-right
+                if (not isLeftEdge) and (num+10 < 101):
+                        neighbors.append(num + 9) # Add down-left
+                if (not isRightEdge) and (num+10 < 101):
+                        neighbors.append(num + 11) # Add down-right
+                return neighbors
+
+
+
+
         
+class Game:
+        # Handles game logic like moves, win/loss checking, and propagation
+        def __init__(self): # Initialize the game state and create a board
+                self.status = 'Playing' # Current game state
+                self.flag_ct = 0 # Number of flags currently placed
+                self.bomb_ct = 0 # Total bombs in the game
+                self.first_click = False # Tracks if the first move is made
+                self.bomb_spaces = [] # List of bomb positions
+                self.board = Board() # initialize the game board
 
-    return
+        def printGame(self): # Display the current board, game status, and number of remaining mines
+                self.board.display() # Print the board
+                print("Current status:", self.status) # Shows game status
+                print("Mines remaining:", self.bomb_ct - self.flag_ct, "\n") # Shows remaining mines
+                return
 
+        def placeBombs(self): # Translates to old generateBoard(). NEEDS TESTING.
+                for i in range(len(self.bomb_spaces)):
+                        bomb_idx = self.bomb_spaces[i] # Get location of bomb
+                        self.board[bomb_idx].bomb = True # Insert bomb character
+
+                # Now we just need to fill values around bombs!
+
+                for i in range(1, len(self.board)): # For every space in the board we need to find how many bombs are around it.
+                        if (self.board[i].bomb):
+                                continue # We don't need the value where bombs are so we skip.
+                        space_val = 0
+                        neighbors = self.board.getNeighbors(i) # We'll get the valid indices in separate function.
+                        for index in neighbors: # Iterate through neighbor list
+                                if (self.board[index].bomb): # If the board at that neighbor is a bomb...
+                                        space_val += 1 # ...increment space value
+                        self.board[i].adjMines = space_val # Set value at that board space.
+
+        def propagate(self, space): # Recursively uncovers neighbouring cells starting from a cell with 0 nearby mines.
+                self.board[space].covered = False
+                neighbors = self.board.getNeighbors(space)
+                for neighbor in neighbors: # if neighbour has 0 adjacent mines and is not flagged, it will recusively uncover
+                        if self.board[neighbor].adjMines == 0 and self.board[neighbor].flagged == False:
+                                if self.board[neighbor].covered:
+                                        self.propagate(neighbor)
+                        elif self.board[neighbor].flagged: # Skip flagged cells
+                                continue
+                        else:
+                                #print(f"Cell {neighbor}")
+                                self.board[neighbor].covered = False
+
+        def printErr(self, msg): # Display an error message and wait for the user to press "ENTER"
+                print(msg)
+                input("Press [ENTER] to continue...")
+
+        def getInput(self): # Parses given command into usable interpretation for program.
+                i = True
+                while i:
+                        try:
+                                inp_string = input('Please give command: ') # Ask for command.
+                                com_type = inp_string[0].lower() # Parse first character for command type ("m" or "f")
+                                if com_type != 'm' and com_type != 'f':
+                                        raise
+                                inp_string = inp_string[1:len(inp_string)] # Remove first character from input string.
+                
+                                col = inp_string[len(inp_string)-1] # Look at end of input string for column letter.
+                                cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] # Bank of possible letters.
+                                if col not in cols:
+                                        raise
+                                col = cols.index(col) + 1 # Translate that column into numerical column position.
+                                inp_string = inp_string[:len(inp_string)-1] # Remove last character from input string.
+                
+                                row = int(inp_string) # What's remaining of input string should be row number.
+                                if row not in range(1, 11):
+                                        raise
+                                i = False
+                        except:
+                                err_msg = '\nCommand is faulty please follow command, row, column format.\n(Hint 1: To mine at row 1, column a, type "m1a")\n(Hint 2: To flag at row 7, column g, type "f7g")'
+                                self.printErr(err_msg)
+                                continue
+                
+                command = [] # Create command value.
+                command.append(com_type) # Add the "m" or "f"
+                command.append(row) # Add row number.
+                command.append(col) # Add column number.
+                return command # Return parsed input.
+
+
+
+        def configure(self):
+                # COLLECT BOMB AMOUNT (DIFFICTULTY)
+                i = 0
+                while i == 0: # This while loop is purely for error handling. We don't stop asking until we get workable input!
+                        try:
+                                self.bomb_ct = int(input('How many bombs should there be?: '))
+                                if self.bomb_ct < 10 or self.bomb_ct > 20: # Bomb count must be between 10 and 20 per the requirements.
+                                        raise
+                                i = 1
+                        except:
+                                print("Invalid bomb count. Please input again.")
+                self.bomb_spaces = random.sample(range(1,101), self.bomb_ct) # Randomly select bomb locations on the board without duplicates
+
+
+
+
+        def move(self, prebomb=False):
+                user_input = self.getInput() # Helper function gives us actionable command.
+                space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row from input into board space.
+                
+                if user_input[0] == 'f': # If we got a flag command, we place the flag on display.
+                        if not self.board[space].flagged: # Empty space means flag is allowed.
+                                        if self.flag_ct + 1 > self.bomb_ct: # Also got to check that we don't place too many flags.
+                                                self.printErr("Cannot flag any more spaces. Please unflag with flag command.")
+                                        elif not self.board[space].covered:
+                                                self.printErr("Cannot flag an uncovered space.")
+                                        else:
+                                                self.board[space].flagged = True # Put a flag on the display!
+                                                self.flag_ct += 1 # Increment the amount of flags on board.
+                        elif self.board[space].flagged: # Flag exists in current space, remove it.
+                                self.board[space].flagged = False # Set flag to empty space.
+                                self.flag_ct -= 1 # Decrement the amount of flags on board.
+                
+                elif user_input[0] == 'm': # We have a mine command!
+                        if self.board[space].flagged: # Are we mining on a flag space?
+                                self.printErr('Cannot mine a flagg given space.') # We don't actually do anything. We just say a flag is in the way.
+                        else:
+                                if prebomb:
+                                        # SPACE-BOMB COLLISION PROBLEM
+                                        if space in self.bomb_spaces: # In the event the selected space is where a mine was planned to be...
+                                                problem_index = self.bomb_spaces.index(space) # Isolate where in the list of bomb spaces the user space and bomb collide.
+                                                while space == self.bomb_spaces[problem_index]: # While these two values are the same...
+                                                        self.bomb_spaces[problem_index] = random.randint(1, 100) # ...we will reroll that bomb space.
+                                                        i = 0 # Then we'll check how many times the new bomb space value appears.
+                                                        for place in self.bomb_spaces: # Check every bomb space
+                                                                if self.bomb_spaces[problem_index] == place: # If the new space appears in bomb spaces, increment.
+                                                                        i += 1 # This should increment only once (when the new space compares itself).
+                                                        if i > 1: # If the new bomb space increments multiple times, we still have a collision.
+                                                                self.bomb_spaces[problem_index] = space # We can't let the while loop end so reset with space.
+                                        
+                                        # CALL BOARD GENERATION
+                                        self.placeBombs()
+                                        # UPDATE BOARD w/ FIRST SPACE
+                                        if self.board[space].adjMines == 0:
+                                                self.propagate(space) # Reveal spaces around the 0 space.
+                                        else:
+                                                self.board[space].covered = False
+                                else:
+                                        # There's a few things we check here:
+                                                # Is the space a bomb?
+                                                # Is the space a flag?
+                                                # Is the space 0?
+                                                # Is the space any other value?
+                                        # We will check if the space is a bomb next.
+                                        if self.board[space].bomb:
+                                                for bomb in self.bomb_spaces: # Reveal all bombs on the board.
+                                                        self.board[bomb].covered = False
+                                                self.status = "Loss" # Lose the game.
+                                        # We will check if the space is the value 0.
+                                        elif self.board[space].adjMines == 0: # 0 is a special value because we...
+                                                self.propagate(space) # ...reveal the neighbor values.
+                                        # The space must be empty and a regular number. Reveal it!
+                                        else:
+                                                self.board[space].covered = False
+
+        def checkWin(self):
+                # CHECK WIN CONDITION
+                remaining_space_check = 0
+                for index in range(1, len(self.board)): # Compare all board spaces
+                        if self.board[index].covered:
+                                remaining_space_check += 1 # Increment remaining empty or flagged spaces.
+                if remaining_space_check == self.bomb_ct: # When there are the same amount of empty or flagged spaces as bombs on the field...
+                        status = "Victory!" # The game has been won! End game loop.
+
+        def checkBombPlacement(self): # Check if all bombs have been correctly placed on the board
+                bombed_spaces = 0
+                for index in range(1, len(self.board)):
+                        if self.board[index].bomb:
+                                bombed_spaces += 1 # Count the number of bombs currently on the board
+                return bombed_spaces == self.bomb_ct # Return true if bomb count matches the intended total
+
+
+        def play(self): # Configures the board, processes moves, and handle win/loss
+                self.configure() # Ask user for bomb count and generate bomb locations
+                while not self.checkBombPlacement(): # Makes sure bombs are properly placed before starting the game
+                        self.printGame()
+                        #print(f"Bomb Spaces: {self.bomb_spaces}")
+                        self.move(True)
+                        os.system('clear')
+                while self.status == 'Playing':
+                        self.printGame() # Display the current board
+                        #print(f"Bomb Spaces: {self.bomb_spaces}")
+                        self.move()
+                        self.checkWin()
+                        os.system('clear') # Clear screen for a fresh board display
+                self.printGame()
+                return
+
+
+
+
+class GameManager: # Handles showing instructions, new games, and replayability
+        def __init__(self):
+                return
+        
+        def newGame(self): # Creates a new game instance and start playing it
+                newgame = Game()
+                newgame.play()
+        
+        def start_message(self): # Display the instruction to the player
+                print('Welcome to Minesweeper!')
+                print('--------------------------------')
+                print('HOW TO PLAY:')
+                print('- Goal: uncover all safe spaces without hitting a mine.')
+                print('- The numbers show how many mines are in the surrounding spaces.')
+                print('- Commands (one command per turn):')
+                print('    m[row][col] → Uncover a space.')
+                print('        Example: m3b means uncover row 3, column b.')
+                print('    f[row][col] → Flag or unflag a space.')
+                print('        Example: f5h means place/remove a flag at row 5, column h.')
+                #print('- Type "q" to quit and save the game.')
+                print('- Win by uncovering every safe space. If you hit a mine, you lose!.')
+                print('--------------------------------')
+        
+        def start(self): # Start the game manager to show instrution, run game and handle replay
+                self.start_message() # Displau instruction to player
+                while True:
+                        self.newGame() # Start a new game
+                        choice = input("Play again?(yes/no): ") # Ask if player want to reply
+                        if choice == 'yes':
+                                os.system('clear') # Clear screen for a fresh game
+                                continue # Starts new game
+                        else:
+                                break # Exit loop and end the program
+
+def main(): # Create a GameManager instance and start the minesweeper game
+        manager = GameManager()
+        manager.start()
 
 main()
