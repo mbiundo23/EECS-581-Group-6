@@ -158,13 +158,13 @@ class Game:
 
         def printErr(self, msg): # Display an error message and wait for the user to press "ENTER"
                 print(msg)
-                input("Press [ENTER] to continue...")
+                input("Press [ENTER] to continue...\n")
 
         def getInput(self): # Parses given command into usable interpretation for program.
                 i = True
                 while i:
                         try:
-                                inp_string = input('Please give command: ') # Ask for command.
+                                inp_string = input('Mine a cell with m[row][col].\nToggle a flag with f[row][col].\nPlease give command: ') # Ask for command.
                                 com_type = inp_string[0].lower() # Parse first character for command type ("m" or "f")
                                 if com_type != 'm' and com_type != 'f':
                                         raise
