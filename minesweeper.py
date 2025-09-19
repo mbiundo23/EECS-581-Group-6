@@ -404,7 +404,6 @@ class GameManager: # Handles showing instructions, new games, and replayability
                 print('        Example: m3b means uncover row 3, column b.')
                 print('    f[row][col] → Flag or unflag a space.')
                 print('        Example: f5h means place/remove a flag at row 5, column h.')
-                #print('- Type "q" to quit and save the game.')
                 print('- Win by uncovering every safe space. If you hit a mine, you lose!.')
                 print('--------------------------------')
        
