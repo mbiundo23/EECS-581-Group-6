@@ -31,7 +31,11 @@ def clear():
 
 
 
-
+'''
+A data structure that represents a single cell in a game grid. 
+It contains all relevant information about the state of the cell, such as the number of adjacent mines, whether or not it has been uncovered, 
+whether or not it contains a bomb, and whether or not it is currently flagged.
+'''
 class Cell:
         #Represents a single cell on the minesweeper board
         def __init__(self): # Initialize a cell with default values
@@ -57,23 +61,31 @@ class Cell:
 
 
 
-
+'''
+Represents the actual grid in a game of Minesweeper. This class can be considered as a list with additional methods. 
+In this program, the grid is represented as a single-dimensional list, where neighboring cells are derived mathematically through the getNeighbors method.
+'''
 class Board: # Represents the minesweeper board and handles neighbor calcualtions and display"
-        def __init__(self): # Initialize the board with 101 cell instances (inded 1-101)
+        # Initialize the board with 101 cell instances (inded 1-101)
+        def __init__(self): 
                 self._board = []
                 for i in range(1, 102):
                         self._board.append(Cell()) # Create a new cell for each board position
 
-        def __getitem__(self, i):  # OVERLOAD INDEXING
+        # OVERLOAD INDEXING
+        def __getitem__(self, i):  
                 if isinstance(i, int):
                         return self._board[i] # Return the cell at index i
                 else:
                         raise # Raises error if index is not an integer
         
-        def __len__(self): # Returns the total number of cells on the board
+        # Returns the total number of cells on the board
+        def __len__(self): 
                 return len(self._board)
         
-        def display(self): # FUNCTION TO DISPLAY USER'S BOARD
+
+        # FUNCTION TO DISPLAY USER'S BOARD
+        def display(self): 
                 print('     A   B   C   D   E   F   G   H   I   J  ') # Prints column header
                 test_string = ''
                 for i in range(10): # Loop over rows
@@ -86,7 +98,8 @@ class Board: # Represents the minesweeper board and handles neighbor calcualtion
                         test_string = '' # Empty test string.
                 return
 
-        def getNeighbors(self, num): # Helps narrow the spaces to check bombs for a given space
+        # Helps narrow the spaces to check bombs for a given space
+        def getNeighbors(self, num): 
                 # First, we'll classify the num as LeftEdge or RightEdge
                 isLeftEdge = False
                 isRightEdge = False
@@ -116,10 +129,10 @@ class Board: # Represents the minesweeper board and handles neighbor calcualtion
 
 
 
-
-
-
-        
+'''
+An entity that represents a single game of Minesweeper and all of its relevant information, including game status, bomb counts, flagged cell counts, start time, and the game grid. 
+It also contains the functionality for obtaining user commands and handling all game logic.
+'''        
 class Game:
         # Handles game logic like moves, win/loss checking, and propagation
         def __init__(self): # Initialize the game state and create a board
@@ -130,12 +143,16 @@ class Game:
                 self.start_time = time.time() #initialize the start time of the game
                 self.board = Board() # initialize the game board
 
-        def timeCheck(self):# Helper function to check the elapsed time of the game
+
+        # Helper function to check the elapsed time of the game
+        def timeCheck(self):
                 cur_time = time.time() #check the time
                 elapsed_time = cur_time - self.start_time #subtract the start time from recent check
                 return elapsed_time #return the current time unformatted
         
-        def displayTime(self): #function to display the current time to the user
+
+        #function to display the current time to the user
+        def displayTime(self): 
                 elapsed_time = self.timeCheck() #do a time check
                 hours = int(elapsed_time // 3600 % 24) #mathematical functions to formate raw number
                 minutes = int(elapsed_time // 60 % 60)
@@ -144,14 +161,17 @@ class Game:
                 print("Time:", formatted_time) #print
 
 
-        def printGame(self): # Display the current board, game status, and number of remaining mines
+        # Display the current board, game status, and number of remaining mines
+        def printGame(self): 
                 self.displayTime()
                 self.board.display() # Print the board
                 print("Current status:", self.status) # Shows game status
                 print("Mines remaining:", self.bomb_ct - self.flag_ct, "\n") # Shows remaining mines
                 return
 
-        def placeBombs(self): # Translates to old generateBoard(). NEEDS TESTING.
+
+        # Places bombs within the Cell instances stored in board. Requires bomb_spaces to be derived first.
+        def placeBombs(self): 
                 for i in range(len(self.bomb_spaces)):
                         bomb_idx = self.bomb_spaces[i] # Get location of bomb
                         self.board[bomb_idx].bomb = True # Insert bomb character
@@ -169,7 +189,8 @@ class Game:
                         self.board[i].adjMines = space_val # Set value at that board space.
 
 
-        def propagate(self, space): # Recursively uncovers neighbouring cells starting from a cell with 0 nearby mines.
+        # Recursively uncovers neighbouring cells starting from a cell with 0 nearby mines.
+        def propagate(self, space): 
                 self.board[space].covered = False
                 neighbors = self.board.getNeighbors(space)
                 for neighbor in neighbors: # if neighbour has 0 adjacent mines and is not flagged, it will recusively uncover
@@ -183,14 +204,14 @@ class Game:
                                 self.board[neighbor].covered = False
 
 
-
-        def printErr(self, msg): # Display an error message and wait for the user to press "ENTER"
+        # Display an error message and wait for the user to press "ENTER". Needed to preserve help messages before clearing terminal.
+        def printErr(self, msg): 
                 print(msg)
                 input("Press [ENTER] to continue...\n")
 
 
-
-        def getInput(self): # Parses given command into usable interpretation for program.
+        # Obtains an input from the user and parses it into a game command, broken into [action, row, column].
+        def getInput(self):
                 i = True
                 while i:
                         try:
@@ -224,6 +245,7 @@ class Game:
 
 
 
+        #Collects the bomb amount from the user and generates an initial list of bomb space indices.
         def configure(self):
                 # COLLECT BOMB AMOUNT (DIFFICTULTY)
                 i = 0
@@ -240,6 +262,16 @@ class Game:
 
 
 
+        '''
+        Main game logic function. First, it obtains a valid command from the user and derives the space from the last two components. 
+        Handles the operations necessary to flag a Cell(directly alters a Cell's flagged attribute) and handles all rule checks. 
+        If the command is to mine, the Cell is uncovered. If the Cell has no adjacent mines, propagate() is called, which uncovers the Cell automatically. 
+        If not, the Cell is uncovered directly in move(). Behavior is slightly different based on the prebomb attribute. 
+        If it is set to True, the selected space is checked for presence in the randomly generated bomb_spaces list. 
+        If it is present, then a new bomb_space is generated. 
+        Once the bomb_spaces list is adjusted, placeBombs() is called, installing bombs in the board attribute. 
+        Then, the Cell is uncovered as normal. If a bomb space is selected and prebomb is False, all bomb spaces are uncovered, and the game status is set to “Loss”.
+        '''
         def move(self, prebomb=False):
                 user_input = self.getInput() # Helper function gives us actionable command.
                 space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row from input into board space.
@@ -299,6 +331,8 @@ class Game:
                                         else:
                                                 self.board[space].covered = False
 
+
+        #Checks if all non-bomb spaces are uncovered. Doesn't return anything, but sets status to Victory if necessary.
         def checkWin(self):
                 # CHECK WIN CONDITION
                 remaining_space_check = 0
@@ -309,7 +343,8 @@ class Game:
                         self.status = "Victory!" # The game has been won! End game loop.
                     
 
-        def checkBombPlacement(self): # Check if all bombs have been correctly placed on the board
+        # Check if all bombs have been correctly placed on the board. Needed to ensure first mined cell doesn't actually have a bomb in it.
+        def checkBombPlacement(self): 
                 bombed_spaces = 0
                 for index in range(1, len(self.board)):
                         if self.board[index].bomb:
@@ -317,7 +352,15 @@ class Game:
                 return bombed_spaces == self.bomb_ct # Return true if bomb count matches the intended total
 
 
-
+        '''
+        Comprises the main game loop. Initially configures the game with configure(). 
+        Then, runs a while loop, which prints the state of the game (printGame()) and requests a command (move()). 
+        The optional parameter for move is set to True in this loop(see move() description). 
+        This loop ends once the bombs have been placed (once the user uncovers their first cell). 
+        After that, another loop begins, performing essentially the same function, with two differences. 
+        The optional command in move() is no longer set, and the checkWin() function is called at the end of every iteration. 
+        The loop breaks once the game status is no longer “Playing”.
+        '''
         def play(self): # Configures the board, processes moves, and handle win/loss
                 self.configure() # Ask user for bomb count and generate bomb locations
                 while not self.checkBombPlacement(): # Makes sure bombs are properly placed before starting the game
@@ -336,16 +379,21 @@ class Game:
 
 
 
+'''
+Entity that coordinates initial contact with the user. It is responsible for printing an initial introductory message, as well as enabling multiple games per execution.
+'''
 class GameManager: # Handles showing instructions, new games, and replayability
+        #GameManager doesn't need any attributes.
         def __init__(self):
-
                 return
         
-        def newGame(self): # Creates a new game instance and start playing it
+        # Creates a new game instance and start playing it
+        def newGame(self): 
                 newgame = Game()
                 newgame.play()
         
-        def start_message(self): # Display the instruction to the player
+        # Display the initial instruction to the player.
+        def start_message(self): 
                 print('Welcome to Minesweeper!')
                 print('--------------------------------')
                 print('HOW TO PLAY:')
@@ -360,8 +408,8 @@ class GameManager: # Handles showing instructions, new games, and replayability
                 print('- Win by uncovering every safe space. If you hit a mine, you lose!.')
                 print('--------------------------------')
        
-      
-        def start(self): # Start the game manager to show instrution, run game and handle replay
+        # Start the game manager to show introduction instrution, run game and handle replays.
+        def start(self):
                 self.start_message() # Displays instruction to player
                 while True:
                         self.newGame() # Start a new game
@@ -372,7 +420,8 @@ class GameManager: # Handles showing instructions, new games, and replayability
                         else:
                                 break # Exit loop and end the program
 
-def main(): # Create a GameManager instance and start the minesweeper game
+# Create a GameManager instance and start the minesweeper game
+def main(): 
         manager = GameManager()
         manager.start()
 
