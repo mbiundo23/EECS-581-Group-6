@@ -1,4 +1,4 @@
-**Please refer to the Project 1 Artifacts folder for the following material:**  
+**Please refer to the following Project 1 artifacts:**  
 - System Architecture: A comprehensive guide to the project code.
 - System Requirements: A listing of project requirements used to guide implementation.
 - Initial Design: Initial design notes.
