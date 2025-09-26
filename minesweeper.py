@@ -142,7 +142,34 @@ class Game:
                 self.bomb_spaces = [] # List of bomb positions
                 self.start_time = time.time() #initialize the start time of the game
                 self.board = Board() # initialize the game board
+                self.score = 0 # initialize score
+                self.total_moves = 0 # initialize total moves
+                self.wrong_flags = 0 # initialize wrong flags
 
+        
+        def caclulateScore(self):
+                # Count only real board indices (1..N); index 0 is unused in this implementation
+                safe_cells = sum(1 for i in range(1, len(self.board)) if not self.board[i].bomb)
+                # Safe cells that have been uncovered
+                revealed_safe = sum(1 for i in range(1, len(self.board)) if (not self.board[i].bomb) and (not self.board[i].covered))
+                # Flags that correctly mark bombs are considered "revealed" for scoring
+                correct_flags = sum(1 for i in range(1, len(self.board)) if self.board[i].bomb and self.board[i].flagged)
+
+                # Avoid division by zero so if no safe cells, consider board fully cleared
+                if safe_cells == 0:
+                        percent_cleared = 1.0
+                else:
+                        percent_cleared = (revealed_safe + correct_flags) / safe_cells
+                        # Clamp to [0,1] just in case
+                        percent_cleared = max(0.0, min(1.0, percent_cleared))
+
+                base_score = (self.bomb_ct * 10) - (self.wrong_flags * 5)
+                computed = base_score * percent_cleared
+                if computed < 0:
+                        computed = 0
+                # Round for display / storage
+                self.score = round(computed, 2)
+                return self.score
 
         # Helper function to check the elapsed time of the game
         def timeCheck(self):
@@ -167,6 +194,8 @@ class Game:
                 self.board.display() # Print the board
                 print("Current status:", self.status) # Shows game status
                 print("Mines remaining:", self.bomb_ct - self.flag_ct, "\n") # Shows remaining mines
+                if self.status != "Playing":
+                        print("Final Score:", round(self.caclulateScore(), 2)) # Show final score if game is over
                 return
 
 
@@ -273,6 +302,7 @@ class Game:
         Then, the Cell is uncovered as normal. If a bomb space is selected and prebomb is False, all bomb spaces are uncovered, and the game status is set to “Game Over: Loss”.
         '''
         def move(self, prebomb=False):
+                self.total_moves += 1 # Increment total moves
                 user_input = self.getInput() # Helper function gives us actionable command.
                 space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row from input into board space.
                 
@@ -285,6 +315,8 @@ class Game:
                                         else:
                                                 self.board[space].flagged = True # Put a flag on the display!
                                                 self.flag_ct += 1 # Increment the amount of flags on board.
+                                                if not self.board[space].bomb:
+                                                        self.wrong_flags += 1 # Increment wrong flags if flag is placed on non-bomb space
                         elif self.board[space].flagged: # Flag exists in current space, remove it.
                                 self.board[space].flagged = False # Set flag to empty space.
                                 self.flag_ct -= 1 # Decrement the amount of flags on board.
