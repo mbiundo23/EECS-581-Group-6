@@ -68,7 +68,7 @@ In this program, the grid is represented as a single-dimensional list, where nei
 class Board: # Represents the minesweeper board and handles neighbor calcualtions and display"
         # Initialize the board with 101 cell instances (inded 1-101)
         def __init__(self): 
-                self._board = []
+                self._board: list[Cell] = []
                 for i in range(1, 102):
                         self._board.append(Cell()) # Create a new cell for each board position
 
@@ -99,7 +99,8 @@ class Board: # Represents the minesweeper board and handles neighbor calcualtion
                 return
 
         # Helps narrow the spaces to check bombs for a given space
-        def getNeighbors(self, num): 
+        @staticmethod
+        def getNeighbors(num): 
                 # First, we'll classify the num as LeftEdge or RightEdge
                 isLeftEdge = False
                 isRightEdge = False
@@ -125,6 +126,130 @@ class Board: # Represents the minesweeper board and handles neighbor calcualtion
                 if (not isRightEdge) and (num+10 < 101):
                         neighbors.append(num + 11) # Add down-right
                 return neighbors
+        
+        @staticmethod
+        def getCellString(index: int) -> str:
+                letters = "ABCDEFGHIJKLMNOP"
+                return letters[((index - 1) % 10)] + str(((index // 10) + 1) % 10)
+
+class AI:
+        def __init__(self, difficulty: str):
+                self.difficulty = difficulty
+
+        def get_move(self, board: Board) -> int:
+                if self.difficulty == "E":
+                        return AI.easy(board)
+                elif self.difficulty == "M":
+                        return AI.medium(board)
+                else:
+                        return AI.hard(board)
+
+        @staticmethod
+        def easy(board: Board) -> int:
+                return -1
+
+        @staticmethod
+        def medium(board: Board) -> int:
+                return -1
+
+        @staticmethod
+        def hard(board: Board) -> int:
+                safeCell = AI.getSafeCell(board)
+                return safeCell if safeCell > 0 else AI.medium(board)
+
+        neighborsList = [Board.getNeighbors(i) for i in range(102)]
+
+        @staticmethod
+        def getSafeCell(board: Board) -> int:
+                boardCopy = [(-1 if cell.covered else cell.adjMines) for cell in board]
+                allowedNeighbors = [(-1 if cell.covered else cell.adjMines) for cell in board]
+
+                mineCount = sum([1 if cell.bomb else 0 for cell in board])
+
+                for i in range(1, len(boardCopy)):
+                        if boardCopy[i] <= 0:
+                                continue
+
+                        neighbors = AI.neighborsList[i]
+
+                        freeNeighbors = [cell for cell in neighbors if boardCopy[cell] == -1]
+                        if allowedNeighbors[i] == len(freeNeighbors):
+                                for cell in freeNeighbors:
+                                        mineCount -= 1
+                                        boardCopy[cell] = -2
+                                        for index in AI.neighborsList[cell]:
+                                                allowedNeighbors[index] -= 1
+                                        print(Board.getCellString(cell), "is a mine.")
+
+                for i in range(1, len(boardCopy)):
+                        if boardCopy[i] != -1:
+                                continue
+
+                        if not AI.canBeMine(boardCopy, allowedNeighbors, i, mineCount):
+                                return i
+                        
+                        print(Board.getCellString(i), "can be a mine.")
+
+                return -1
+
+        @staticmethod
+        def canBeMine(board: list[int], allowedNeighbors: list[int], cell: int, maxMines: int) -> bool:
+                if board[cell] != -1:
+                        return False
+
+                neighbors = AI.neighborsList[cell]
+
+                for index in neighbors:
+                        if allowedNeighbors[index] == 0:
+                                return False
+
+                for index in neighbors:
+                        allowedNeighbors[index] -= 1
+
+                board[cell] = -2 
+                valid = AI.isValidBoardState(board, allowedNeighbors, maxMines - 1)
+                board[cell] = -1
+
+                for index in neighbors:
+                        allowedNeighbors[index] += 1
+
+                return valid
+
+        @staticmethod
+        def isValidBoardState(board: list[int], allowedNeighbors: list[int], minesLeft: int) -> bool:                
+                if minesLeft == 0:
+                        for count in allowedNeighbors:
+                                if count > 0:
+                                        return False
+                        return True
+
+                for cell, neighborCount in enumerate(board):
+                        if neighborCount != -1:
+                                continue
+
+                        neighbors = AI.neighborsList[cell]
+
+                        for index in neighbors:
+                                if allowedNeighbors[index] <= 0:
+                                        continue
+
+                        for index in neighbors:
+                                allowedNeighbors[index] -= 1
+
+                        board[cell] = -2 
+                        valid = AI.isValidBoardState(board, allowedNeighbors, minesLeft - 1)
+                        board[cell] = -1
+
+                        for index in neighbors:
+                                allowedNeighbors[index] += 1
+
+                        if valid:
+                                return True
+
+                return False
+
+
+
 
 
 
@@ -211,7 +336,7 @@ class Game:
                         if (self.board[i].bomb):
                                 continue # We don't need the value where bombs are so we skip.
                         space_val = 0
-                        neighbors = self.board.getNeighbors(i) # We'll get the valid indices in separate function.
+                        neighbors = Board.getNeighbors(i) # We'll get the valid indices in separate function.
                         for index in neighbors: # Iterate through neighbor list
                                 if (self.board[index].bomb): # If the board at that neighbor is a bomb...
                                         space_val += 1 # ...increment space value
@@ -221,7 +346,7 @@ class Game:
         # Recursively uncovers neighbouring cells starting from a cell with 0 nearby mines.
         def propagate(self, space): 
                 self.board[space].covered = False
-                neighbors = self.board.getNeighbors(space)
+                neighbors = Board.getNeighbors(space)
                 for neighbor in neighbors: # if neighbour has 0 adjacent mines and is not flagged, it will recusively uncover
                         if self.board[neighbor].adjMines == 0 and self.board[neighbor].flagged == False:
                                 if self.board[neighbor].covered:
