@@ -251,7 +251,7 @@ class Game:
                 i = 0
                 while i == 0:
                         try:
-                                size_input = input("Chose Grid Size - Small 10 x 10, Medium 15 x 15, Large 25 x 25 (Please enter s, m or l)").lower()
+                                size_input = input("Chose Grid Size - Small 10 x 10, Medium 15 x 15, Large 25 x 25 (Please enter s, m or l): ").lower()
 
                                 if size_input == 's':
                                         GRID_SIZE = 10 
