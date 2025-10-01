@@ -11,6 +11,8 @@ import random
 import os
 import time
 
+GRID_SIZE =  10
+
 '''
 Helper function to clear the terminal so output doesn't get too cluttered.
 The clear command is different on windows vs linx/mac, so different 
@@ -25,12 +27,6 @@ def clear():
         # case for Linux/MAC
         else:
                 os.system('clear')
-
-
-
-
-
-
 '''
 A data structure that represents a single cell in a game grid. 
 It contains all relevant information about the state of the cell, such as the number of adjacent mines, whether or not it has been uncovered, 
@@ -54,22 +50,16 @@ class Cell:
                         return '  ' # Empty string for covered cell
                 else:
                         return f" {str(self.adjMines)}" # Show number of adjacent mines if uncovered
-
-
-
-
-
-
-
 '''
 Represents the actual grid in a game of Minesweeper. This class can be considered as a list with additional methods. 
 In this program, the grid is represented as a single-dimensional list, where neighboring cells are derived mathematically through the getNeighbors method.
 '''
 class Board: # Represents the minesweeper board and handles neighbor calcualtions and display"
-        # Initialize the board with 101 cell instances (inded 1-101)
+        # Initialize the board with 101 cell instances (inded 1-101) -(Changed to 1 to chosen grid size)
+
         def __init__(self): 
                 self._board = []
-                for i in range(1, 102):
+                for i in range(1, (GRID_SIZE * GRID_SIZE) + 2):
                         self._board.append(Cell()) # Create a new cell for each board position
 
         # OVERLOAD INDEXING
@@ -86,15 +76,23 @@ class Board: # Represents the minesweeper board and handles neighbor calcualtion
 
         # FUNCTION TO DISPLAY USER'S BOARD
         def display(self): 
-                print('     A   B   C   D   E   F   G   H   I   J  ') # Prints column header
+                if GRID_SIZE == 10:
+                        print('     A   B   C   D   E   F   G   H   I   J  ') # Prints column header
+
+                elif GRID_SIZE == 15:
+                        print('     A   B   C   D   E   F   G   H   I   J   K   L   M   N   O  ') 
+
+                elif GRID_SIZE == 25:
+                        print('     A   B   C   D   E   F   G   H   I   J   K   L   M   N   O   P   Q   R   S   T   U   V   W   X   Y  ') 
                 test_string = ''
-                for i in range(10): # Loop over rows
-                        for j in range(10): # Loop over columns
-                                test_string += '[' + str(self._board[(((i*10)+j)+1)]) +']'
-                        if (i+1 != 10): # Prints rows with built string above.
-                                print(str(i+1) + '  ' + test_string)
-                        else: # Row 10 requires less space between itself and test string.
-                                print(str(i+1) + ' ' + test_string)
+                for i in range(GRID_SIZE): # Loop over rows
+                        for j in range(GRID_SIZE): # Loop over columns
+                                index = (i * GRID_SIZE) + j + 1
+                                test_string += '[' + str(self._board[index]) + ']'
+
+                        row_num = str(i + 1)
+                        padding = ' ' * (4 - len(row_num))
+                        print(padding + row_num + test_string)
                         test_string = '' # Empty test string.
                 return
 
@@ -103,27 +101,27 @@ class Board: # Represents the minesweeper board and handles neighbor calcualtion
                 # First, we'll classify the num as LeftEdge or RightEdge
                 isLeftEdge = False
                 isRightEdge = False
-                if ((num-1)%10) == 0: # This singles out 1, 11, 21, 31, etc as left edges.
+                if ((num-1)% GRID_SIZE) == 0: # This singles out 1, 11, 21, 31, etc as left edges.
                         isLeftEdge = True
-                if (num%10) == 0: # This singles out 10, 20, 30, 40, as right edges.
+                if (num% GRID_SIZE) == 0: # This singles out 10, 20, 30, 40, as right edges.
                         isRightEdge = True
                 neighbors = []
                 if not isRightEdge:
                         neighbors.append(num + 1) # Add right
                 if not isLeftEdge:
                         neighbors.append(num - 1) # Add left
-                if (num + 10 < 101):
-                        neighbors.append(num + 10) # Add down
-                if (num - 10 > 0):
-                        neighbors.append(num - 10) # Add up
-                if (not isLeftEdge) and (num-10 > 0):
-                        neighbors.append(num - 11) # Add up-left
-                if (not isRightEdge) and (num-10 > 0):
-                        neighbors.append(num - 9) # Add up-right
-                if (not isLeftEdge) and (num+10 < 101):
-                        neighbors.append(num + 9) # Add down-left
-                if (not isRightEdge) and (num+10 < 101):
-                        neighbors.append(num + 11) # Add down-right
+                if (num + GRID_SIZE < (GRID_SIZE * GRID_SIZE) + 1):
+                        neighbors.append(num + GRID_SIZE) # Add down
+                if (num - GRID_SIZE > 0):
+                        neighbors.append(num - GRID_SIZE) # Add up
+                if (not isLeftEdge) and (num - GRID_SIZE > 0):
+                        neighbors.append(num - GRID_SIZE + 1) # Add up-left
+                if (not isRightEdge) and (num - GRID_SIZE > 0):
+                        neighbors.append(num - GRID_SIZE - 1) # Add up-right
+                if (not isLeftEdge) and (num + GRID_SIZE < (GRID_SIZE * GRID_SIZE) + 1):
+                        neighbors.append(num + GRID_SIZE - 1) # Add down-left
+                if (not isRightEdge) and (num + GRID_SIZE < (GRID_SIZE * GRID_SIZE) + 1):
+                        neighbors.append(num + GRID_SIZE + 1) # Add down-right
                 return neighbors
 
 
@@ -141,7 +139,7 @@ class Game:
                 self.bomb_ct = 0 # Total bombs in the game
                 self.bomb_spaces = [] # List of bomb positions
                 self.start_time = time.time() #initialize the start time of the game
-                self.board = Board() # initialize the game board
+                #self.board = Board() # initialize the game board
 
 
         # Helper function to check the elapsed time of the game
@@ -222,14 +220,14 @@ class Game:
                                 inp_string = inp_string[1:len(inp_string)] # Remove first character from input string.
                 
                                 col = inp_string[len(inp_string)-1] # Look at end of input string for column letter.
-                                cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] # Bank of possible letters.
+                                cols = [chr(97 + i) for i in range(GRID_SIZE)]
                                 if col not in cols:
                                         raise
                                 col = cols.index(col) + 1 # Translate that column into numerical column position.
                                 inp_string = inp_string[:len(inp_string)-1] # Remove last character from input string.
                 
                                 row = int(inp_string) # What's remaining of input string should be row number.
-                                if row not in range(1, 11):
+                                if row not in range(1, GRID_SIZE + 1):
                                         raise
                                 i = False
                         except:
@@ -246,19 +244,43 @@ class Game:
 
 
         #Collects the bomb amount from the user and generates an initial list of bomb space indices.
+        #Feature added: indludes a grid size option
         def configure(self):
-                # COLLECT BOMB AMOUNT (DIFFICTULTY)
+                global GRID_SIZE
+                # Collect grid size preference using same structure
                 i = 0
+                while i == 0:
+                        try:
+                                size_input = input("Chose Grid Size - Small 10 x 10, Medium 15 x 15, Large 25 x 25 (Please enter s, m or l)").lower()
+
+                                if size_input == 's':
+                                        GRID_SIZE = 10 
+                                elif size_input == 'm':
+                                        GRID_SIZE = 15
+                                elif size_input == 'l':
+                                        GRID_SIZE = 25
+                                i = 1
+                        except: 
+                                print("Invalid Grid Size")
+                self.board = Board() #update board size 
+                                
+                # COLLECT BOMB AMOUNT (DIFFICTULTY)
+                # The added feature includes adding a different range for each grid size 
+
+                #calculate minnimum an maximum for bomb sizes
+                bomb_min =  (GRID_SIZE * GRID_SIZE)// 10
+                bomb_max = (GRID_SIZE * GRID_SIZE) // 5
+                i = 0 
                 while i == 0: # This while loop is purely for error handling. We don't stop asking until we get workable input!
                         try:
                                 self.bomb_ct = int(input('How many bombs should there be?: '))
-                                if self.bomb_ct < 10 or self.bomb_ct > 20: # Bomb count must be between 10 and 20 per the requirements.
+                                if self.bomb_ct < bomb_min or self.bomb_ct > bomb_max: # Bomb count must be between 10 and 20 per the requirements. (Changed to 10-20% of grid size)
                                         raise
                                 i = 1
                         except:
                                 print("Invalid bomb count. Please input again.")
 
-                self.bomb_spaces = random.sample(range(1,101), self.bomb_ct) # Randomly select bomb locations on the board without duplicates
+                self.bomb_spaces = random.sample(range(1,((GRID_SIZE * GRID_SIZE) + 1)), self.bomb_ct) # Randomly select bomb locations on the board without duplicates
 
 
 
@@ -274,11 +296,11 @@ class Game:
         '''
         def move(self, prebomb=False):
                 user_input = self.getInput() # Helper function gives us actionable command.
-                space = ((user_input[1]-1)*10) + user_input[2] # Translate col and row from input into board space.
+                space = ((user_input[1]-1) * GRID_SIZE) + user_input[2] # Translate col and row from input into board space.
                 
                 if user_input[0] == 'f': # If we got a flag command, we place the flag on display.
                         if not self.board[space].flagged: # Empty space means flag is allowed.
-                                        if self.flag_ct + 1 > self.bomb_ct: # Also got to check that we don't place too many flags.
+                                        if self.checkBombPlacement() and self.flag_ct + 1 > self.bomb_ct: # Also got to check that we don't place too many flags.
                                                 self.printErr("Cannot flag any more spaces. Please unflag with flag command.")
                                         elif not self.board[space].covered:
                                                 self.printErr("Cannot flag an uncovered space.")
@@ -298,7 +320,7 @@ class Game:
                                         if space in self.bomb_spaces: # In the event the selected space is where a mine was planned to be...
                                                 problem_index = self.bomb_spaces.index(space) # Isolate where in the list of bomb spaces the user space and bomb collide.
                                                 while space == self.bomb_spaces[problem_index]: # While these two values are the same...
-                                                        self.bomb_spaces[problem_index] = random.randint(1, 100) # ...we will reroll that bomb space.
+                                                        self.bomb_spaces[problem_index] = random.randint(1, GRID_SIZE * GRID_SIZE) # ...we will reroll that bomb space.
                                                         i = 0 # Then we'll check how many times the new bomb space value appears.
                                                         for place in self.bomb_spaces: # Check every bomb space
                                                                 if self.bomb_spaces[problem_index] == place: # If the new space appears in bomb spaces, increment.
