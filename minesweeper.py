@@ -148,7 +148,45 @@ class AI:
 
         @staticmethod
         def medium(board: Board) -> int:
-                return -1
+                # row,col =random.randint(1, 11),random.randint(1, 11)
+                # space = ((row - 1) * 10) + col
+                # First, if the number of hidden neighbors of a revealed cell equals that cell’s number, the AI should flag all hidden neighbors.
+                rule_1_flag = 0
+                rule_2_flag = 0
+                bomb_count=0
+                flag_count=0
+
+                for i in range(len(board)):
+                        if board[i].flagged==True:
+                                flag_count+=1
+                        if board[i].bomb==True:
+                                bomb_count+=1
+
+                for i in range(len(board)):  # check every cell
+                        hidden_neighbors = 0
+                        flagged_neighbors = 0
+                        if board[i].covered == False:  # revealed is true
+                                possible_neighbors = board.getNeighbors(i)
+                                for neighbor in possible_neighbors:
+                                        if board[neighbor].covered: #add to hidden neighbors if is covered
+                                                hidden_neighbors += 1
+                                if hidden_neighbors == board[i].adjMines:  # First, if the number of hidden neighbors of a revealed cell equals that cell’s number, the AI should flag all hidden neighbors.
+                                        for neighbor in possible_neighbors:
+                                                if (flag_count + 1 <= bomb_count) and board[neighbor].covered == True:
+                                                        board[neighbor].flagged = True
+                                                        flag_count += 1
+
+                                for neighbor in possible_neighbors: # get the amount of flag neighbors for rule 2
+                                        if board[neighbor].flagged == True:
+                                                flagged_neighbors += 1
+
+                                if flagged_neighbors == board[i].adjMines:  # Second, if the number of flagged neighbors of a revealed cell equals that cell’s number, the AI should open all other hidden neighbors.
+                                        for neighbor in possible_neighbors:
+                                                if board[neighbor].flagged == False:
+                                                              return i
+
+
+                return AI.easy(board)
 
         @staticmethod
         def hard(board: Board) -> int:
