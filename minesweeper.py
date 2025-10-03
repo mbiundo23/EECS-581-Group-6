@@ -127,8 +127,9 @@ class Board: # Represents the minesweeper board and handles neighbor calcualtion
         
         @staticmethod
         def getCellString(index: int) -> str:
-                letters = "ABCDEFGHIJKLMNOP"
-                return letters[((index - 1) % 10)] + str(((index // 10) + 1) % 10)
+                letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                letterIndex = ((index - 1) % GRID_SIZE)
+                return letters[letterIndex] + str(((index // GRID_SIZE) + 1 - ( 1 if letterIndex == GRID_SIZE - 1 else 0)))
 
 class AI:
         def __init__(self, difficulty: str):
@@ -152,47 +153,141 @@ class AI:
 
         @staticmethod
         def hard(board: Board) -> int:
+                AI.neighborsList = [Board.getNeighbors(i) for i in range(len(board))]
+                AI.timeout = time.time() + 3
                 safeCell = AI.getSafeCell(board)
                 return safeCell if safeCell > 0 else AI.medium(board)
 
-        neighborsList = [Board.getNeighbors(i) for i in range(102)]
+        neighborsList = []
+        timeout = 0
 
         @staticmethod
         def getSafeCell(board: Board) -> int:
-                boardCopy = [(-1 if cell.covered else cell.adjMines) for cell in board]
                 allowedNeighbors = [(-1 if cell.covered else cell.adjMines) for cell in board]
+                ignoreCells = [True for _ in board]
+                for cell in board:
+                        cell.flagged = False
 
-                mineCount = sum([1 if cell.bomb else 0 for cell in board])
+                globalPlacedMines = [False for _ in allowedNeighbors]
+                placedMine = True
 
-                for i in range(1, len(boardCopy)):
-                        if boardCopy[i] <= 0:
+                while placedMine:
+                        placedMine = False
+
+                        for i in range(1, len(allowedNeighbors)):
+                                if allowedNeighbors[i] < 0:
+                                        continue
+
+                                ignoreCells[i] = False
+
+                                neighbors = AI.neighborsList[i]
+
+                                for neighbor in neighbors:
+                                        if ignoreCells[neighbor] and allowedNeighbors[neighbor] <= -1 and not globalPlacedMines[neighbor]:
+                                                ignoreCells[neighbor] = False
+
+                                if allowedNeighbors[i] == 0:
+                                        ignoreCells[i] = True
+                                        continue
+                                
+                                freeNeighbors = [cell for cell in neighbors if (allowedNeighbors[cell] <= -1 and not globalPlacedMines[cell])]
+                                if allowedNeighbors[i] == len(freeNeighbors):
+                                        for cell in freeNeighbors:
+                                                ignoreCells[cell] = True
+                                                globalPlacedMines[cell] = True
+                                                board[cell].flagged = True
+                                                for index in AI.neighborsList[cell]:
+                                                        if allowedNeighbors[index] < 0:
+                                                                continue
+
+                                                        allowedNeighbors[index] = board[index].adjMines
+                                                        for nn in AI.neighborsList[index]:
+                                                                if globalPlacedMines[nn]:
+                                                                        allowedNeighbors[index] -= 1
+
+                                                #print(f"{Board.getCellString(cell)} is a mine.")
+                                        placedMine = True
+
+                for i in range(1, len(allowedNeighbors)):
+                        if ignoreCells[i]:
+                                continue
+
+                        if allowedNeighbors[i] >= 0:
+                                continue
+
+                        if globalPlacedMines[i]:
                                 continue
 
                         neighbors = AI.neighborsList[i]
 
-                        freeNeighbors = [cell for cell in neighbors if boardCopy[cell] == -1]
-                        if allowedNeighbors[i] == len(freeNeighbors):
-                                for cell in freeNeighbors:
-                                        mineCount -= 1
-                                        boardCopy[cell] = -2
-                                        for index in AI.neighborsList[cell]:
-                                                allowedNeighbors[index] -= 1
-                                        print(Board.getCellString(cell), "is a mine.")
-
-                for i in range(1, len(boardCopy)):
-                        if boardCopy[i] != -1:
+                        for neighbor in neighbors:
+                                if allowedNeighbors[neighbor] == 0:
+                                        return i
+                                
+                for i in range(1, len(allowedNeighbors)):
+                        if allowedNeighbors[i] != 2:
                                 continue
 
-                        if not AI.canBeMine(boardCopy, allowedNeighbors, i, mineCount):
-                                return i
+                        up = i - GRID_SIZE
+                        down = i + GRID_SIZE
+                        left = i - 1
+                        right = i + 1
+
+                        upGood = up > 0
+                        downGood = down < len(allowedNeighbors)
+                        leftGood = i % GRID_SIZE != 0
+                        rightGood = i % GRID_SIZE != GRID_SIZE - 1
+
+                        if upGood and downGood and allowedNeighbors[up] == 1 and allowedNeighbors[down] == 1:
+                                if leftGood:
+                                        if allowedNeighbors[left] < 0 and allowedNeighbors[down - 1] < 0 and allowedNeighbors[up - 1] < 0:
+                                                return left
+                                
+                                if rightGood:
+                                        if allowedNeighbors[right] < 0 and allowedNeighbors[down + 1] < 0 and allowedNeighbors[up + 1] < 0:
+                                                return right
+                                        
+                        if leftGood and rightGood and allowedNeighbors[left] == 1 and allowedNeighbors[right] == 1:
+                                if upGood:
+                                        if allowedNeighbors[up] < 0 and allowedNeighbors[up - 1] < 0 and allowedNeighbors[up + 1] < 0:
+                                                return up
+                                        
+                                if downGood:
+                                        if allowedNeighbors[down] < 0 and allowedNeighbors[down - 1] < 0 and allowedNeighbors[down + 1] < 0:
+                                                return down
+                
+
+                for i in range(1, len(allowedNeighbors)):
+                        if time.time() > AI.timeout:
+                                return -1
+
+                        if ignoreCells[i]:
+                                continue
+
+                        if allowedNeighbors[i] >= 0:
+                                continue
+
+                        if globalPlacedMines[i]:
+                                continue
+
+                        neighbors = AI.neighborsList[i]
+
+                        loop: list[int] = []
+                        AI.getLoop(ignoreCells, i, loop)
+
+                        solution = AI.solveLoop(ignoreCells, allowedNeighbors, loop, globalPlacedMines)
+
+                        if solution != -1:
+                                return solution
                         
-                        print(Board.getCellString(i), "can be a mine.")
+                        for cell in loop:
+                                ignoreCells[cell] = True
 
                 return -1
-
+        
         @staticmethod
-        def canBeMine(board: list[int], allowedNeighbors: list[int], cell: int, maxMines: int) -> bool:
-                if board[cell] != -1:
+        def canPutMine(allowedNeighbors: list[int], cell: int) -> bool:
+                if allowedNeighbors[cell] >= 0:
                         return False
 
                 neighbors = AI.neighborsList[cell]
@@ -200,54 +295,143 @@ class AI:
                 for index in neighbors:
                         if allowedNeighbors[index] == 0:
                                 return False
-
-                for index in neighbors:
-                        allowedNeighbors[index] -= 1
-
-                board[cell] = -2 
-                valid = AI.isValidBoardState(board, allowedNeighbors, maxMines - 1)
-                board[cell] = -1
-
-                for index in neighbors:
-                        allowedNeighbors[index] += 1
-
-                return valid
+                
+                return True
 
         @staticmethod
-        def isValidBoardState(board: list[int], allowedNeighbors: list[int], minesLeft: int) -> bool:                
-                if minesLeft == 0:
-                        for count in allowedNeighbors:
-                                if count > 0:
-                                        return False
-                        return True
+        def putMine(ignore: list[bool], allowedNeighbors: list[int], cell: int) -> bool:
+                if allowedNeighbors[cell] >= 0:
+                        return False
 
-                for cell, neighborCount in enumerate(board):
-                        if neighborCount != -1:
+                neighbors = AI.neighborsList[cell]
+
+                for index in neighbors:
+                        if allowedNeighbors[index] == 0:
+                                return False
+                
+                for index in neighbors:
+                        allowedNeighbors[index] -= 1
+                
+                ignore[cell] = True
+                
+                return True
+
+        @staticmethod 
+        def removeMine(ignore: list[bool], allowedNeighbors: list[int], cell: int):
+                ignore[cell] = False
+
+                for index in AI.neighborsList[cell]:
+                        allowedNeighbors[index] += 1
+
+        @staticmethod
+        def getLoop(ignore: list[bool], cell: int, loop: list[int]):
+                if ignore[cell]:
+                        return
+                
+                if cell in loop:
+                        return
+                
+                loop.append(cell)
+
+                for index in AI.neighborsList[cell]:
+                        if ignore[index]:
+                                continue
+                        AI.getLoop(ignore, index, loop)
+        
+        @staticmethod
+        def solveLoop(ignore: list[bool], allowedNeighbors: list[int], loop: list[int], globalPlacedMines: list[bool]) -> int:
+
+                #loop = [item for item in loop if allowedNeighbors[item] < 0]
+
+                for i in loop:
+                        if time.time() > AI.timeout:
+                                return -1
+
+                        if globalPlacedMines[i]:
                                 continue
 
-                        neighbors = AI.neighborsList[cell]
+                        if allowedNeighbors[i] >= 0:
+                                continue
 
-                        for index in neighbors:
-                                if allowedNeighbors[index] <= 0:
-                                        continue
+                        if not AI.putMine(ignore, allowedNeighbors, i):
+                                return i
+                        
+                        banned = [not AI.canPutMine(allowedNeighbors, i) for i in range(len(allowedNeighbors))]
+                        
+                        thisPlacedMines = [False for _ in ignore]
+                        thisPlacedMines[i] = True
 
-                        for index in neighbors:
-                                allowedNeighbors[index] -= 1
+                        if AI.tryFindSolution(ignore, allowedNeighbors, loop, thisPlacedMines, globalPlacedMines, banned, 1):
+                                AI.removeMine(ignore, allowedNeighbors, i)
+                                continue
+                        
+                        AI.removeMine(ignore, allowedNeighbors, i)
+                        return i
+                
+                return -1
 
-                        board[cell] = -2 
-                        valid = AI.isValidBoardState(board, allowedNeighbors, minesLeft - 1)
-                        board[cell] = -1
 
-                        for index in neighbors:
-                                allowedNeighbors[index] += 1
+        @staticmethod
+        def tryFindSolution(ignore: list[bool], allowedNeighbors: list[int], loop: list[int], thisPlacedMines: list[bool], globalPlacedMines: list[bool], banned: list[bool], start: int) -> bool:
+                solved = True
+                
+                for item in loop:
+                        if allowedNeighbors[item] > 0:
+                                solved = False
+                                break
+                
+                if solved:
+                        for i, canBeMine in enumerate(thisPlacedMines):
+                                if canBeMine:
+                                        globalPlacedMines[i] = True
+                                        #print(f"{Board.getCellString(i)} is bad.")
+                        return True
 
-                        if valid:
+                for i, cell in enumerate(loop):
+                        if time.time() > AI.timeout:
                                 return True
 
+                        if thisPlacedMines[cell]:
+                                continue
+
+                        if banned[cell]:
+                                continue
+
+                        if not AI.putMine(ignore, allowedNeighbors, cell):
+                                continue
+
+                        thisPlacedMines[cell] = True
+
+                        for neighbor in AI.neighborsList[cell]:
+                                if not AI.canPutMine(allowedNeighbors, neighbor):
+                                        banned[neighbor] = True
+
+                        if AI.tryFindSolution(ignore, allowedNeighbors, loop, thisPlacedMines, globalPlacedMines, banned, i + 1):
+                                AI.removeMine(ignore, allowedNeighbors, cell)
+                                return True
+                        
+                        AI.removeMine(ignore, allowedNeighbors, cell)
+                        thisPlacedMines[cell] = False
+
+                        for neighbor in AI.neighborsList[cell]:
+                                if AI.canPutMine(allowedNeighbors, neighbor):
+                                        banned[neighbor] = False
+                
+                solved = True
+
+                for item in loop:
+                        if allowedNeighbors[item] > 0:
+                                solved = False
+                                break
+                
+                if solved:
+                        for i, canBeMine in enumerate(thisPlacedMines):
+                                if canBeMine:
+                                        globalPlacedMines[i] = True
+                                        #print(f"{Board.getCellString(i)} is bad.")
+                        return True
+                
                 return False
-
-
-
 
 
 
