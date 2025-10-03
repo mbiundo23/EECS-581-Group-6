@@ -203,8 +203,6 @@ class AI:
         def getSafeCell(board: Board) -> int:
                 allowedNeighbors = [(-1 if cell.covered else cell.adjMines) for cell in board]
                 ignoreCells = [True for _ in board]
-                for cell in board:
-                        cell.flagged = False
 
                 globalPlacedMines = [False for _ in allowedNeighbors]
                 placedMine = True
@@ -233,7 +231,6 @@ class AI:
                                         for cell in freeNeighbors:
                                                 ignoreCells[cell] = True
                                                 globalPlacedMines[cell] = True
-                                                board[cell].flagged = True
                                                 for index in AI.neighborsList[cell]:
                                                         if allowedNeighbors[index] < 0:
                                                                 continue
